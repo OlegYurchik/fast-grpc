@@ -6,4 +6,5 @@
 .venv
 .vscode
 __pycache__
+dist
 pyrightconfig.json

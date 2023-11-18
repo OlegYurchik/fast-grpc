@@ -5,7 +5,7 @@ Fast-gRPC it is simple and easy to use Python gRPC framework.
 ## Installation
 
 ```shell
-pip install fast-grpc
+pip install py-fast-grpc
 ```
 
 ## Quick Start

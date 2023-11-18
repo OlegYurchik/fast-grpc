@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "fast-grpc"
-version = "0.1.0"
+name = "py-fast-grpc"
+version = "0.1.1"
 description = "gRPC simple and easy to use Python framework"
 authors = ["Oleg Yurchik"]
 license = "MIT License"
 readme = "README.md"
-include = [
-  "fast_grpc",
+packages = [
+  { include = "fast_grpc" },
 ]
 
 [tool.poetry.dependencies]
