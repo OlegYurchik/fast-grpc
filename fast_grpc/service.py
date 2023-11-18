@@ -1,6 +1,6 @@
 import pathlib
 import sys
-from typing import Callable, Type
+from typing import Any, Callable, Type
 
 from pydantic import BaseModel
 
@@ -65,8 +65,11 @@ class FastGRPCService:
     def pb2_grpc(self):
         return self._pb2_grpc
 
-    def __get__(self, key: str):
-        return self._methods[key]
+    def __getattribute__(self, __name: str) -> Any:
+        methods = object.__getattribute__(self, "_methods")
+        if __name in methods:
+            return methods[__name]
+        return object.__getattribute__(self, __name)
 
     def get_service_name(self) -> str:
         return self._pb2.DESCRIPTOR.services_by_name[self._name].full_name
