@@ -1,0 +1,17 @@
+syntax = "proto3";
+package {{ service.name | lower }};
+
+service {{ service.name }} {
+  {% for method in service.methods.values() %}
+    rpc {{ method.name }}({{ method.request.name }}) returns ({{ method.response.name}}) {}
+  {% endfor %}
+}
+
+{% for message in service.messages.values() %}
+  message {{ message.name }} {
+    {% for field in message.fields.values() %}
+      {% if field.repeated %}repeated{% endif %}
+      {{ field.type.value }} {{ field.name }} = {{ loop.index0 + 1 }};
+    {% endfor %}
+  }
+{% endfor %}

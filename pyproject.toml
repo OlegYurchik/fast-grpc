@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "fast-grpc"
+version = "0.1.0"
+description = "gRPC simple and easy to use Python framework"
+authors = ["Oleg Yurchik"]
+license = "MIT License"
+readme = "README.md"
+include = [
+  "fast_grpc",
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = "^2.5.1"
+grpcio = "^1.59.3"
+grpcio-reflection = "^1.59.3"
+grpcio-tools = "^1.59.3"
+jinja2 = "^3.1.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
