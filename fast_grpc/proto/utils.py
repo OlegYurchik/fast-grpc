@@ -34,11 +34,13 @@ def get_message_from_model(model: Type[BaseModel]) -> Message:
 def render_proto(service: Service, proto_path: pathlib.Path):
     template = JINJA_ENV.get_template("service.proto")
     content = template.render(service=service)
+    proto_path.mkdir(parents=True, exist_ok=True)
     proto_file_path = proto_path / f"{service.name.lower()}.proto"
     proto_file_path.write_text(content)
 
 
 def compile_proto(service: Service, proto_path: pathlib.Path, grpc_path: pathlib.Path):
+    grpc_path.mkdir(parents=True, exist_ok=True)
     protoc_args = [
         f"--proto_path={proto_path}",
         f"--python_out={grpc_path}",
