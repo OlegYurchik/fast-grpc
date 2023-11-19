@@ -1,3 +1,4 @@
+import inspect
 import pathlib
 import sys
 from typing import Any, Callable, Type
@@ -7,29 +8,67 @@ from pydantic import BaseModel
 from . import proto
 
 
-def grpc_method(
-        request_model: Type[BaseModel],
-        response_model: Type[BaseModel],
-        name: str | None = None,
-        disable: bool = False,
-):
-    def decorator(function: Callable):
+class grpc_method:
+    def __init__(
+            self,
+            name: str | None = None,
+            request_model: Type[BaseModel] | None = None,
+            response_model: Type[BaseModel] | None = None,
+            disable: bool = False,
+    ):
+        self._name = name
+        self._request_model = request_model
+        self._response_model = response_model
+        self._disable = disable
+
+    def __call__(self, function: Callable):
         async def wrapper(self, request, context):
+            request_model = wrapper._grpc_method_request_model
+            response_model = wrapper._grpc_method_response_model
+
             request = request_model.model_validate(request, from_attributes=True)
-            response = await function(self, request)
+
+            args = {"self": self, "request": request}
+            if "context" in signature.parameters:
+                args["context"] = context
+
+            response = await function(**args)
+
             grpc_model = getattr(self.pb2, response_model.__name__)
             return grpc_model(**response.model_dump(mode="json"))
-        
-        wrapper._grpc_method_enabled = not disable
-        wrapper._grpc_method_name = name or function.__name__
-        wrapper._grpc_method_request_model = request_model
-        wrapper._grpc_method_response_model = response_model
+
+
+        signature = inspect.signature(function)
+        wrapper._grpc_method_enabled = not self._disable
+        wrapper._grpc_method_name = self._name or function.__name__
+        wrapper._grpc_method_request_model = (
+            self._request_model or self.get_request_model_from_signature(signature)
+        )
+        wrapper._grpc_method_response_model = (
+            self._response_model or self.get_response_model_from_signature(signature)
+        )
 
         return wrapper
-    return decorator
+
+    @staticmethod
+    def get_request_model_from_signature(signature) -> Type[BaseModel]:
+        if "request" not in signature.parameters:
+            raise TypeError("GRPC method should have 'request' parameter")
+        request_parameter = signature.parameters["request"]
+        if not issubclass(request_parameter.annotation, BaseModel):
+            raise TypeError("GRPC method parameter 'request' should be pydantic model")
+        return request_parameter.annotation
+
+    @staticmethod
+    def get_response_model_from_signature(signature) -> Type[BaseModel]:
+        if not issubclass(signature.return_annotation, BaseModel):
+            raise TypeError("GRPC method should have pydantic model in return annotation")
+        return signature.return_annotation
 
 
 class FastGRPCService:
+    _methods: dict[str, Callable] = {}
+
     def __init__(
             self,
             name: str | None = None,
@@ -72,7 +111,7 @@ class FastGRPCService:
         return object.__getattribute__(self, __name)
 
     def get_service_name(self) -> str:
-        return self._pb2.DESCRIPTOR.services_by_name[self._name].full_name
+        return self._pb2.DESCRIPTOR.services_by_name[self.name].full_name
 
     def _gather_methods(self) -> proto.Service:
         self._methods.clear()
@@ -97,12 +136,13 @@ class FastGRPCService:
             messages[request_message.name] = request_message
             messages[response_message.name] = response_message
 
-        return proto.Service(name=self._name, methods=methods, messages=messages)
+        return proto.Service(name=self.name, methods=methods, messages=messages)
 
     def _setup(self):
         service = self._gather_methods()
-        proto.render_proto(service=service, proto_path=self._proto_path)
-        proto.compile_proto(service=service, proto_path=self._proto_path, grpc_path=self._grpc_path)
+        proto.render_proto(service=service, proto_path=self.proto_path)
+        proto.compile_proto(service=service, proto_path=self.proto_path, grpc_path=self.grpc_path)
+        proto.delete_proto(service=service, proto_path=self.proto_path)
 
         grpc_path = str(self._grpc_path)
         if grpc_path not in sys.path:

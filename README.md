@@ -24,11 +24,11 @@ class HelloResponse(BaseModel):
 
 
 class Greeter(FastGRPCService):
-    @grpc_method(request_model=HelloRequest, response_model=HelloResponse)
+    @grpc_method()
     async def say_hello(self, request: HelloRequest) -> HelloResponse:
         return HelloResponse(text=f"Hello, {request.name}!")
 
 
-app = FastGRPC(Greeter(), reflection=True)
+app = FastGRPC(Greeter())
 app.run()
 ```

@@ -34,8 +34,8 @@ def get_message_from_model(model: Type[BaseModel]) -> Message:
 def render_proto(service: Service, proto_path: pathlib.Path):
     template = JINJA_ENV.get_template("service.proto")
     content = template.render(service=service)
-    with open(proto_path / f"{service.name.lower()}.proto", "wt") as proto_file:
-        proto_file.write(content)
+    proto_file_path = proto_path / f"{service.name.lower()}.proto"
+    proto_file_path.write_text(content)
 
 
 def compile_proto(service: Service, proto_path: pathlib.Path, grpc_path: pathlib.Path):
@@ -50,3 +50,8 @@ def compile_proto(service: Service, proto_path: pathlib.Path, grpc_path: pathlib
 
     if status_code != 0:
         raise Exception("Protobuf compilation failed")
+
+
+def delete_proto(service: Service, proto_path: pathlib.Path):
+    proto_file_path = proto_path / f"{service.name.lower()}.proto"
+    proto_file_path.unlink(missing_ok=True)
