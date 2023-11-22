@@ -1,6 +1,8 @@
 import enum
 import uuid
 
+from pydantic import NegativeInt, NonNegativeInt, NonPositiveInt, PositiveInt
+
 
 class TypeEnum(str, enum.Enum):
     DOUBLE = "double"
@@ -22,6 +24,10 @@ class TypeEnum(str, enum.Enum):
 
 TYPE_MAPPING = {
     int: TypeEnum.INT64,
+    NonNegativeInt: TypeEnum.UINT64,
+    PositiveInt: TypeEnum.UINT64,
+    NonPositiveInt: TypeEnum.INT64,
+    NegativeInt: TypeEnum.INT64,
     float: TypeEnum.FLOAT,
     bool: TypeEnum.BOOL,
     str: TypeEnum.STRING,

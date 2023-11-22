@@ -1,5 +1,5 @@
-from types import NoneType, UnionType
-from typing import Type
+from types import NoneType
+from typing import Type, Union, get_origin
 
 from pydantic import BaseModel
 
@@ -35,7 +35,7 @@ def get_fields_from_model(model: Type[BaseModel]) -> dict[str, Field]:
     for name, field in model.__fields__.items():
         if field.annotation in TYPE_MAPPING:
             grpc_type = TYPE_MAPPING[field.annotation]
-        elif isinstance(field.annotation, UnionType):
+        elif get_origin(field.annotation) is Union:
             args = list(field.annotation.__args__)
             if NoneType in field.annotation.__args__:
                 args.remove(NoneType)
