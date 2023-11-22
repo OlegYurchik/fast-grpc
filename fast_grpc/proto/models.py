@@ -1,6 +1,9 @@
+from types import NoneType, UnionType
+from typing import Type
+
 from pydantic import BaseModel
 
-from .enums import TypeEnum
+from .enums import TYPE_MAPPING, TypeEnum
 
 
 class Field(BaseModel):
@@ -24,3 +27,28 @@ class Service(BaseModel):
     name: str
     methods: dict[str, Method]
     messages: dict[str, Message]
+
+
+def get_fields_from_model(model: Type[BaseModel]) -> dict[str, Field]:
+    fields = {}
+
+    for name, field in model.__fields__.items():
+        if field.annotation in TYPE_MAPPING:
+            grpc_type = TYPE_MAPPING[field.annotation]
+        elif isinstance(field.annotation, UnionType):
+            args = list(field.annotation.__args__)
+            if NoneType in field.annotation.__args__:
+                args.remove(NoneType)
+            if len(args) != 1 or args[0] not in TYPE_MAPPING:
+                raise TypeError()
+            grpc_type = TYPE_MAPPING[args[0]]
+        else:
+            raise TypeError()
+
+        fields[name] = Field(name=name, type=grpc_type)
+
+    return fields
+
+
+def get_message_from_model(model: Type[BaseModel]) -> Message:
+    return Message(name=model.__name__, fields=get_fields_from_model(model))

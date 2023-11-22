@@ -1,34 +1,14 @@
 import pathlib
-from typing import Type
 
 import jinja2
 from grpc_tools import protoc
-from pydantic import BaseModel
 
-from .enums import TYPE_MAPPING
-from .models import Field, Message, Service
+from .models import Service
 
 
 TEMPLATE_DIR_PATH = pathlib.Path(__file__).parent / "templates"
 JINJA_ENV = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATE_DIR_PATH))
 
-
-def get_fields_from_model(model: Type[BaseModel]) -> dict[str, Field]:
-    fields = {}
-
-    for name, field in model.__fields__.items():
-        if field.annotation in TYPE_MAPPING:
-            grpc_type = TYPE_MAPPING[field.annotation]
-        else:
-            raise TypeError()
-
-        fields[name] = Field(name=name, type=grpc_type)
-
-    return fields
-
-
-def get_message_from_model(model: Type[BaseModel]) -> Message:
-    return Message(name=model.__name__, fields=get_fields_from_model(model))
 
 
 def render_proto(service: Service, proto_path: pathlib.Path):

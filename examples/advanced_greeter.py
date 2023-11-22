@@ -10,7 +10,7 @@ class HelloRequest(BaseModel):
 
 
 class HelloResponse(BaseModel):
-    text: str
+    text: str | None = None
 
 
 class Greeter(FastGRPCService):
