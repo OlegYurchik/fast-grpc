@@ -11,7 +11,12 @@ service {{ service.name }} {
   message {{ message.name }} {
     {% for field in message.fields.values() %}
       {% if field.repeated %}repeated{% endif %}
-      {{ field.type.value }} {{ field.name }} = {{ loop.index0 + 1 }};
+      {% if field.type.value == "map" %}
+        map<{{ field.map_key.value }}, {{ field.map_value.value }}>
+      {% else %}
+        {{ field.type.value }}
+      {% endif %}
+      {{ field.name }} = {{ loop.index0 + 1 }};
     {% endfor %}
   }
 {% endfor %}

@@ -20,6 +20,7 @@ class TypeEnum(str, enum.Enum):
     BOOL = "bool"
     STRING = "string"
     BYTES = "bytes"
+    MAP = "map"
 
 
 TYPE_MAPPING = {
@@ -33,4 +34,5 @@ TYPE_MAPPING = {
     str: TypeEnum.STRING,
     bytes: TypeEnum.BYTES,
     uuid.UUID: TypeEnum.STRING,
+    dict: TypeEnum.MAP,
 }

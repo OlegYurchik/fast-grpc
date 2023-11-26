@@ -11,6 +11,7 @@ class HelloRequest(BaseModel):
 
 class HelloResponse(BaseModel):
     text: str | None = None
+    meta: dict[str, str] = {}
 
 
 class Greeter(FastGRPCService):
@@ -27,7 +28,10 @@ class Greeter(FastGRPCService):
     async def say_hello(self, request, context):
         if request.name == "Oleg":
             await context.abort(code=400, details=self.cancel_message)
-        return HelloResponse(text=f"Hello, {request.name}!")
+        return HelloResponse(
+            text=f"Hello, {request.name}!",
+            meta={"Service": "Greeter"},
+        )
 
 
 app = FastGRPC(

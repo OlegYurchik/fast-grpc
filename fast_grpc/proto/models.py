@@ -1,15 +1,27 @@
-from types import NoneType
-from typing import Type, Union, get_origin
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
-from .enums import TYPE_MAPPING, TypeEnum
+from .enums import TypeEnum
 
 
 class Field(BaseModel):
     name: str
-    type: TypeEnum
+    type: TypeEnum | BaseModel
     repeated: bool = False
+    map_key: TypeEnum | None = None
+    map_value: TypeEnum | None = None
+
+    @model_validator(mode="after")
+    def root_validator(self):
+        if self.type is TypeEnum.MAP:
+            if self.repeated:
+                raise ValueError("Field 'repeated' cannot be True, when protobuf type is 'map'")
+            if self.map_key is None:
+                raise ValueError("Field 'map_key' must be set, when protobuf type is 'map'")
+            if self.map_value is None:
+                raise ValueError("Field 'map_value' must be set, when protobuf type is 'map'")
+
+        return self
 
 
 class Message(BaseModel):
@@ -27,28 +39,3 @@ class Service(BaseModel):
     name: str
     methods: dict[str, Method]
     messages: dict[str, Message]
-
-
-def get_fields_from_model(model: Type[BaseModel]) -> dict[str, Field]:
-    fields = {}
-
-    for name, field in model.__fields__.items():
-        if field.annotation in TYPE_MAPPING:
-            grpc_type = TYPE_MAPPING[field.annotation]
-        elif get_origin(field.annotation) is Union:
-            args = list(field.annotation.__args__)
-            if NoneType in field.annotation.__args__:
-                args.remove(NoneType)
-            if len(args) != 1 or args[0] not in TYPE_MAPPING:
-                raise TypeError()
-            grpc_type = TYPE_MAPPING[args[0]]
-        else:
-            raise TypeError()
-
-        fields[name] = Field(name=name, type=grpc_type)
-
-    return fields
-
-
-def get_message_from_model(model: Type[BaseModel]) -> Message:
-    return Message(name=model.__name__, fields=get_fields_from_model(model))

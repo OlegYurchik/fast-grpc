@@ -32,3 +32,10 @@ class Greeter(FastGRPCService):
 app = FastGRPC(Greeter())
 app.run()
 ```
+
+## TODO
+
+1. Support nested models in schemas
+2. Add generating client
+3. Add returning .proto files
+4. Add unit tests
