@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, model_validator
 
 from .enums import TypeEnum
@@ -6,10 +5,10 @@ from .enums import TypeEnum
 
 class Field(BaseModel):
     name: str
-    type: TypeEnum | BaseModel
+    type: str
     repeated: bool = False
-    map_key: TypeEnum | None = None
-    map_value: TypeEnum | None = None
+    map_key: str | None = None
+    map_value: str | None = None
 
     @model_validator(mode="after")
     def root_validator(self):

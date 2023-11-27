@@ -35,7 +35,6 @@ app.run()
 
 ## TODO
 
-1. Support nested models in schemas
-2. Add generating client
-3. Add returning .proto files
-4. Add unit tests
+1. Add generating client
+2. Add returning .proto files
+3. Add unit tests

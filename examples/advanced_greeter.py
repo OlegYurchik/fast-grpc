@@ -1,17 +1,23 @@
 import asyncio
 import pathlib
 
-from fast_grpc import FastGRPC, FastGRPCService, grpc_method
 from pydantic import BaseModel
+
+from fast_grpc import FastGRPC, FastGRPCService, grpc_method
 
 
 class HelloRequest(BaseModel):
     name: str
 
 
+class HelloMetaResponse(BaseModel):
+    key: str
+    value: str
+
+
 class HelloResponse(BaseModel):
     text: str | None = None
-    meta: dict[str, str] = {}
+    meta: dict[str, HelloMetaResponse] = {}
 
 
 class Greeter(FastGRPCService):
@@ -30,7 +36,7 @@ class Greeter(FastGRPCService):
             await context.abort(code=400, details=self.cancel_message)
         return HelloResponse(
             text=f"Hello, {request.name}!",
-            meta={"Service": "Greeter"},
+            meta={"response": HelloMetaResponse(key="service", value="Greeter")},
         )
 
 
