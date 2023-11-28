@@ -3,7 +3,7 @@ import pathlib
 import sys
 from typing import Any, Callable, Type
 
-from google.protobuf.json_format import ParseDict
+from google.protobuf.json_format import MessageToDict, ParseDict
 from pydantic import BaseModel
 
 from . import proto
@@ -107,6 +107,35 @@ class FastGRPCService:
     @property
     def pb2_grpc(self):
         return self._pb2_grpc
+
+    def get_client(self) -> type:
+        stub_class = getattr(self.pb2_grpc, f"{self.name}Stub")
+        class_name = f"{self.__class__.__name__}Client"
+        attributes = {}
+        for method_name, method in self._methods.items():
+            grpc_method = getattr(stub_class, method_name)
+            request_message_class = getattr(self.pb2, method._grpc_method_request_model.__name__)
+            response_message_class = getattr(self.pb2, method._grpc_method_response_model.__name__)
+
+            async def wrapper(
+                    self,
+                    request,
+                    _grpc_method=grpc_method,
+                    _request_message_class=request_message_class,
+                    _response_message_class=response_message_class,
+            ):
+                grpc_request = ParseDict(request.model_dump(mode="json"), _request_message_class())
+                response = await _grpc_method(request=grpc_request)
+                response_dict = MessageToDict(
+                    response,
+                    including_default_value_fields=True,
+                    preserving_proto_field_name=True,
+                )
+                return _response_message_class.model_validate(response_dict)
+
+            attributes[method_name] = wrapper
+
+        return type(class_name, (stub_class,), attributes)
 
     def __getattribute__(self, __name: str) -> Any:
         methods = object.__getattribute__(self, "_methods")

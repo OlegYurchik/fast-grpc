@@ -40,12 +40,13 @@ class Greeter(FastGRPCService):
         )
 
 
-app = FastGRPC(
-    Greeter(cancel_message="We do not serve Olegs"),
-    port=50051,
-    reflection=True,
-)
+if __name__ == "__main__":
+    app = FastGRPC(
+        Greeter(cancel_message="We do not serve Olegs"),
+        port=50051,
+        reflection=True,
+    )
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(app.run_async())
-loop.close()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(app.run_async())
+    loop.close()
