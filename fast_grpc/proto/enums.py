@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from pydantic import NegativeInt, NonNegativeInt, NonPositiveInt, PositiveInt
+from pydantic import EmailStr, NegativeInt, NonNegativeInt, NonPositiveInt, PositiveInt
 
 
 class TypeEnum(str, enum.Enum):
@@ -25,14 +25,15 @@ class TypeEnum(str, enum.Enum):
 
 TYPE_MAPPING = {
     int: TypeEnum.INT64,
-    NonNegativeInt: TypeEnum.UINT64,
-    PositiveInt: TypeEnum.UINT64,
     NonPositiveInt: TypeEnum.INT64,
     NegativeInt: TypeEnum.INT64,
+    NonNegativeInt: TypeEnum.UINT64,
+    PositiveInt: TypeEnum.UINT64,
     float: TypeEnum.FLOAT,
     bool: TypeEnum.BOOL,
     str: TypeEnum.STRING,
-    bytes: TypeEnum.BYTES,
+    EmailStr: TypeEnum.STRING,
     uuid.UUID: TypeEnum.STRING,
+    bytes: TypeEnum.BYTES,
     dict: TypeEnum.MAP,
 }
