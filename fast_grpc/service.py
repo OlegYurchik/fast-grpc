@@ -3,6 +3,7 @@ import pathlib
 import sys
 from typing import Any, Callable, Type
 
+import grpc
 from google.protobuf.json_format import MessageToDict, ParseDict
 from pydantic import BaseModel
 
@@ -43,6 +44,7 @@ class grpc_method:
             )
 
         signature = inspect.signature(function)
+        wrapper.__name__ = function.__name__
         wrapper._grpc_method_enabled = not self._disable
         wrapper._grpc_method_name = self._name or function.__name__
         wrapper._grpc_method_request_model = (
@@ -70,89 +72,41 @@ class grpc_method:
         return signature.return_annotation
 
 
-class FastGRPCService:
-    _methods: dict[str, Callable] = {}
+class FastGRPCServiceMeta(type):
+    def __init__(cls, name: str, bases: tuple[type], attributes: dict[str, Any]):
+        super().__init__(name, bases, attributes)
 
-    def __init__(
-            self,
-            name: str | None = None,
-            proto_path: pathlib.Path = pathlib.Path.cwd(),
-            grpc_path: pathlib.Path = pathlib.Path.cwd(),
-    ):
-        self._name = name or self.__class__.__name__
-        self._proto_path = proto_path
-        self._grpc_path = grpc_path
-        self._pb2 = None
-        self._pb2_grpc = None
-        self._methods = {}
+        if not attributes.get("is_proxy", False):
+            cls.name = attributes.pop("name", name)
+            cls.proto_path = attributes.pop("proto_path", pathlib.Path.cwd())
+            cls.grpc_path = attributes.pop("grpc_path", pathlib.Path.cwd())
+            cls._methods = {}
 
-        self._setup()
+            cls._setup()
 
-    @property
-    def name(self) -> str:
-        return self._name
+    def _setup(cls):
+        service = cls.build_proto_service()
+        try:
+            proto.render_proto(service=service, proto_path=cls.proto_path)
+            proto.compile_proto(service=service, proto_path=cls.proto_path,
+                                grpc_path=cls.grpc_path)
+        finally:
+            proto.delete_proto(service=service, proto_path=cls.proto_path)
 
-    @property
-    def proto_path(self) -> pathlib.Path:
-        return self._proto_path
+        grpc_path = str(cls.grpc_path)
+        if grpc_path not in sys.path:
+            sys.path.append(grpc_path)
+        cls.pb2 = __import__(f"{service.name.lower()}_pb2")
+        cls.pb2_grpc = __import__(f"{service.name.lower()}_pb2_grpc")
+        cls.Client = cls.get_client()
 
-    @property
-    def grpc_path(self) -> pathlib.Path:
-        return self._grpc_path
-
-    @property
-    def pb2(self):
-        return self._pb2
-
-    @property
-    def pb2_grpc(self):
-        return self._pb2_grpc
-
-    def get_client(self) -> type:
-        stub_class = getattr(self.pb2_grpc, f"{self.name}Stub")
-        class_name = f"{self.__class__.__name__}Client"
-        attributes = {}
-        for method_name, method in self._methods.items():
-            grpc_method = getattr(stub_class, method_name)
-            request_message_class = getattr(self.pb2, method._grpc_method_request_model.__name__)
-            response_message_class = getattr(self.pb2, method._grpc_method_response_model.__name__)
-
-            async def wrapper(
-                    self,
-                    request,
-                    _grpc_method=grpc_method,
-                    _request_message_class=request_message_class,
-                    _response_message_class=response_message_class,
-            ):
-                grpc_request = ParseDict(request.model_dump(mode="json"), _request_message_class())
-                response = await _grpc_method(request=grpc_request)
-                response_dict = MessageToDict(
-                    response,
-                    including_default_value_fields=True,
-                    preserving_proto_field_name=True,
-                )
-                return _response_message_class.model_validate(response_dict)
-
-            attributes[method_name] = wrapper
-
-        return type(class_name, (stub_class,), attributes)
-
-    def __getattribute__(self, __name: str) -> Any:
-        methods = object.__getattribute__(self, "_methods")
-        if __name in methods:
-            return methods[__name]
-        return object.__getattribute__(self, __name)
-
-    def get_service_name(self) -> str:
-        return self._pb2.DESCRIPTOR.services_by_name[self.name].full_name
-
-    def build_proto_service(self) -> proto.Service:
-        self._methods.clear()
+    def build_proto_service(cls) -> proto.Service:
+        cls._methods.clear()
         methods = {}
         messages = {}
         models = set()
-        for attribute_name in dir(self):
-            attribute = getattr(self, attribute_name)
+        for attribute_name in dir(cls):
+            attribute = getattr(cls, attribute_name)
             if not getattr(attribute, "_grpc_method_enabled", False):
                 continue
 
@@ -162,7 +116,7 @@ class FastGRPCService:
             request_message = proto.get_message_from_model(attribute._grpc_method_request_model)
             response_message = proto.get_message_from_model(attribute._grpc_method_response_model) 
 
-            self._methods[method_name] = attribute
+            cls._methods[method_name] = attribute
 
             methods[method_name] = proto.Method(
                 name=method_name,
@@ -173,19 +127,51 @@ class FastGRPCService:
                 message = proto.get_message_from_model(model)
                 messages[message.name] = message
 
-        return proto.Service(name=self.name, methods=methods, messages=messages)
+        return proto.Service(name=cls.name, methods=methods, messages=messages)
 
-    def _setup(self):
-        service = self.build_proto_service()
-        try:
-            proto.render_proto(service=service, proto_path=self.proto_path)
-            proto.compile_proto(service=service, proto_path=self.proto_path,
-                                grpc_path=self.grpc_path)
-        finally:
-            proto.delete_proto(service=service, proto_path=self.proto_path)
+    def get_client(cls) -> type:
+        class_name = f"{cls.name}Client"
+        attributes = {}
+        for grpc_method_name, method in cls._methods.items():
+            request_message_class = getattr(cls.pb2, method._grpc_method_request_model.__name__)
+            response_message_class = method._grpc_method_response_model
 
-        grpc_path = str(self._grpc_path)
-        if grpc_path not in sys.path:
-            sys.path.append(grpc_path)
-        self._pb2 = __import__(f"{service.name.lower()}_pb2")
-        self._pb2_grpc = __import__(f"{service.name.lower()}_pb2_grpc")
+            async def wrapper(
+                    self,
+                    request,
+                    _grpc_method_name=grpc_method_name,
+                    _request_message_class=request_message_class,
+                    _response_message_class=response_message_class,
+            ):
+                grpc_method = getattr(self._stub, _grpc_method_name)
+                grpc_request = ParseDict(request.model_dump(mode="json"), _request_message_class())
+                response = await grpc_method(request=grpc_request)
+                response_dict = MessageToDict(
+                    response,
+                    including_default_value_fields=True,
+                    preserving_proto_field_name=True,
+                )
+                return _response_message_class.model_validate(response_dict)
+
+            attributes[method.__name__] = wrapper
+
+        def __init__(self, host: str, port: int):
+            channel = grpc.aio.insecure_channel(f"{host}:{port}")
+            self._stub = getattr(cls.pb2_grpc, f"{cls.name}Stub")(channel)
+
+        attributes["__init__"] = __init__
+
+        return type(class_name, (), attributes)
+
+    
+class FastGRPCService(metaclass=FastGRPCServiceMeta):
+    is_proxy: bool = True
+
+    def __getattribute__(self, __name: str) -> Any:
+        methods = object.__getattribute__(self, "_methods")
+        if __name in methods:
+            return methods[__name].__get__(self, self.__class__)
+        return object.__getattribute__(self, __name)
+
+    def get_service_name(self) -> str:
+        return self.pb2.DESCRIPTOR.services_by_name[self.name].full_name

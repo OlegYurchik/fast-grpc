@@ -35,6 +35,6 @@ app.run()
 
 ## TODO
 
-1. Add generating client
+1. Add middlewares support
 2. Add returning .proto files
 3. Add unit tests

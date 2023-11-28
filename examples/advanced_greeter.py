@@ -3,7 +3,7 @@ import pathlib
 
 from pydantic import BaseModel
 
-from fast_grpc import FastGRPC, FastGRPCService, grpc_method
+from fast_grpc import FastGRPC, FastGRPCService, StatusCode, grpc_method
 
 
 class HelloRequest(BaseModel):
@@ -28,15 +28,13 @@ class Greeter(FastGRPCService):
     def __init__(self, cancel_message: str):
         self.cancel_message = cancel_message
 
-        super().__init__()  # It is necessary
-
     @grpc_method("SayHello", request_model=HelloRequest, response_model=HelloResponse)
     async def say_hello(self, request, context):
         if request.name == "Oleg":
-            await context.abort(code=400, details=self.cancel_message)
+            await context.abort(code=StatusCode.PERMISSION_DENIED, details=self.cancel_message)
         return HelloResponse(
             text=f"Hello, {request.name}!",
-            meta={"response": HelloMetaResponse(key="service", value="Greeter")},
+            meta={"service": HelloMetaResponse(key="service", value="Greeter")},
         )
 
 

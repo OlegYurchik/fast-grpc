@@ -16,5 +16,5 @@ class Greeter(FastGRPCService):
         return HelloResponse(text=f"Hello, {request.name}!")
 
 
-app = FastGRPC(Greeter())
+app = FastGRPC(Greeter(), reflection=True)
 app.run()
