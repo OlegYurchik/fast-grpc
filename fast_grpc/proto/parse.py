@@ -1,6 +1,6 @@
 import inspect
 from types import NoneType, UnionType
-from typing import Type, get_origin
+from typing import Type, Union, get_origin
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -18,7 +18,7 @@ def parse_type_sequence(name: str, python_type, args: list) -> Field:
     inside_python_type = args[0]
     if (origin := get_origin(inside_python_type)) is not None:
         inside_args = list(inside_python_type.__args__)
-        if origin is UnionType:
+        if origin in (Union, UnionType):
             return parse_type_union(name, inside_python_type, inside_args)
         else:
             raise TypeError(
@@ -80,12 +80,8 @@ def parse_type_union(name: str, python_type, args: list) -> Field:
     inside_python_type = args[0]
     if (origin := get_origin(inside_python_type)) is not None:
         inside_args = list(inside_python_type.__args__)
-        if origin is UnionType:
+        if origin in (Union, UnionType):
             return parse_type_union(name, inside_python_type, inside_args)
-        else:
-            raise TypeError(
-                f"Field '{name}': unsupported type '{inside_python_type}' in '{python_type}'.",
-            )
     if inside_python_type in TYPE_MAPPING:
         grpc_type = TYPE_MAPPING[inside_python_type].value
     elif inspect.isclass(inside_python_type) and issubclass(inside_python_type, BaseModel):
@@ -104,17 +100,13 @@ def parse_field(name: str, field: FieldInfo) -> Field:
     python_type = field.annotation
     if (origin := get_origin(python_type)) is not None:
         args = list(python_type.__args__)
+        if origin in (Union, UnionType):
+            return parse_type_union(name, python_type, args)
         if issubclass(origin, (list, tuple, set, frozenset)):
             return parse_type_sequence(name, python_type, args)
         elif issubclass(origin, dict):
             return parse_type_mapping(name, python_type, args)
-        elif origin is UnionType:
-            return parse_type_union(name, python_type, args)
-        else:
-            raise TypeError(f"Field '{name}': unknown origin '{origin}' in type '{python_type}'.")
 
-    if not inspect.isclass(python_type):
-        raise TypeError(f"Field '{name}': must be a type, not a '{python_type}'.")
     if python_type in TYPE_MAPPING:
         grpc_type = TYPE_MAPPING[python_type].value
     else:

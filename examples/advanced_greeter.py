@@ -34,7 +34,7 @@ class Greeter(FastGRPCService):
             await context.abort(code=StatusCode.PERMISSION_DENIED, details=self.cancel_message)
         return HelloResponse(
             text=f"Hello, {request.name}!",
-            meta={"service": HelloMetaResponse(key="service", value="Greeter")},
+            meta={"response": HelloMetaResponse(key="service", value="Greeter")},
         )
 
 
