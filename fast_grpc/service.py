@@ -87,7 +87,8 @@ class FastGRPCServiceMeta(type):
     def _setup(cls):
         service = cls.build_proto_service()
         try:
-            proto.render_proto(service=service, proto_path=cls.proto_path)
+            content = proto.render_proto(service=service)
+            proto.write_proto(service=service, proto_path=cls.proto_path, content=content)
             proto.compile_proto(service=service, proto_path=cls.proto_path,
                                 grpc_path=cls.grpc_path)
         finally:
@@ -146,11 +147,7 @@ class FastGRPCServiceMeta(type):
                 grpc_method = getattr(self._stub, _grpc_method_name)
                 grpc_request = ParseDict(request.model_dump(mode="json"), _request_message_class())
                 response = await grpc_method(request=grpc_request)
-                response_dict = MessageToDict(
-                    response,
-                    including_default_value_fields=True,
-                    preserving_proto_field_name=True,
-                )
+                response_dict = MessageToDict(response, preserving_proto_field_name=True)
                 return _response_message_class.model_validate(response_dict)
 
             attributes[method.__name__] = wrapper

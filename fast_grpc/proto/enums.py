@@ -1,4 +1,5 @@
 import enum
+import pathlib
 import uuid
 
 from pydantic import EmailStr, NegativeInt, NonNegativeInt, NonPositiveInt, PositiveInt
@@ -27,13 +28,14 @@ TYPE_MAPPING = {
     int: TypeEnum.INT64,
     NonPositiveInt: TypeEnum.INT64,
     NegativeInt: TypeEnum.INT64,
-    NonNegativeInt: TypeEnum.UINT64,
-    PositiveInt: TypeEnum.UINT64,
-    float: TypeEnum.FLOAT,
+    NonNegativeInt: TypeEnum.INT64,
+    PositiveInt: TypeEnum.INT64,
+    float: TypeEnum.DOUBLE,
     bool: TypeEnum.BOOL,
     str: TypeEnum.STRING,
     EmailStr: TypeEnum.STRING,
     uuid.UUID: TypeEnum.STRING,
+    pathlib.Path: TypeEnum.STRING,
     bytes: TypeEnum.BYTES,
     dict: TypeEnum.MAP,
 }
