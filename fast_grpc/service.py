@@ -86,13 +86,9 @@ class FastGRPCServiceMeta(type):
 
     def _setup(cls):
         service = cls.build_proto_service()
-        try:
-            content = proto.render_proto(service=service)
-            proto.write_proto(service=service, proto_path=cls.proto_path, content=content)
-            proto.compile_proto(service=service, proto_path=cls.proto_path,
-                                grpc_path=cls.grpc_path)
-        finally:
-            proto.delete_proto(service=service, proto_path=cls.proto_path)
+        content = proto.render_proto(service=service)
+        proto.write_proto(service=service, proto_path=cls.proto_path, content=content)
+        proto.compile_proto(service=service, proto_path=cls.proto_path, grpc_path=cls.grpc_path)
 
         grpc_path = str(cls.grpc_path)
         if grpc_path not in sys.path:
