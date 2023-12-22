@@ -2,21 +2,18 @@ syntax = "proto3";
 package {{ service.name | lower }};
 
 service {{ service.name }} {
-  {% for method in service.methods.values() %}
+{% for method in service.methods.values() %}
     rpc {{ method.name }}({{ method.request.name }}) returns ({{ method.response.name}}) {}
-  {% endfor %}
+{% endfor %}
 }
 
 {% for message in service.messages.values() %}
-  message {{ message.name }} {
-    {% for field in message.fields.values() %}
-      {% if field.repeated %}repeated{% endif %}
-      {% if field.type == "map" %}
-        map<{{ field.map_key }}, {{ field.map_value }}>
-      {% else %}
-        {{ field.type }}
-      {% endif %}
-      {{ field.name }} = {{ loop.index0 + 1 }};
-    {% endfor %}
-  }
+message {{ message.name }} {
+{% for field in message.fields.values() %}
+    {% if field.repeated %}repeated {% endif -%}
+    {% if field.type == "map" %}map<{{ field.map_key }}, {{ field.map_value }}> {% else %}{{ field.type }} {% endif -%}
+    {{ field.name }} = {{ loop.index0 + 1 }};
+{% endfor %}
+}
+
 {% endfor %}
