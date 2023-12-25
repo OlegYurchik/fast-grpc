@@ -35,7 +35,7 @@ def parse_type_mapping(name: str, python_type, args: list) -> Field:
 
     grpc_type = TYPE_MAPPING[dict].value
     python_map_key, python_map_value = args
-    map_key = parse_type(name, python_map_key, python_type)
+    map_key = parse_type(name, python_map_key, python_type, allow_pydantic_model=False)
     map_value = parse_type(name, python_map_value, python_type)
 
     return Field(
@@ -61,16 +61,16 @@ def parse_type_union(name: str, python_type, args: list) -> Field:
     return Field(name=name, type=grpc_type)
 
 
-def parse_type(name: str, python_value, python_type):
+def parse_type(name: str, python_value, python_type, allow_pydantic_model: bool = True):
     if python_value in TYPE_MAPPING:
         value = TYPE_MAPPING[python_value].value
     elif (
-        (origin := get_origin(python_value)) is not None and
-        origin in (Annotated, Union, UnionType)
+            (origin := get_origin(python_value)) is not None and
+            origin in (Annotated, Union, UnionType)
     ):
         python_value_args = list(python_value.__args__)
         value = parse_type_union(name=name, python_type=python_value, args=python_value_args).type
-    elif inspect.isclass(python_value) and issubclass(python_value, BaseModel):
+    elif allow_pydantic_model and inspect.isclass(python_value) and issubclass(python_value, BaseModel):
         value = python_value.__name__
     else:
         raise TypeError(
@@ -135,10 +135,10 @@ def gather_models(model: Type[BaseModel]) -> set[Type[BaseModel]]:
                 if get_origin(arg) is not None:
                     arg_stack.extend(arg.__args__)
                 elif (
-                    inspect.isclass(arg) and
-                    issubclass(arg, BaseModel) and
-                    arg not in processed and
-                    arg not in stack
+                        inspect.isclass(arg) and
+                        issubclass(arg, BaseModel) and
+                        arg not in processed and
+                        arg not in stack
                 ):
                     stack.append(arg)
 

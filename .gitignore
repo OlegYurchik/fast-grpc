@@ -5,6 +5,6 @@
 .idea
 .venv
 .vscode
-*__pycache__*
+__pycache__
 dist
 pyrightconfig.json
