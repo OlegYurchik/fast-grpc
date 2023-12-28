@@ -78,12 +78,8 @@ class FastGRPCServiceMeta(type):
 
         if not attributes.get("is_proxy", False):
             cls.name = attributes.pop("name", name)
-            cls.proto_path = attributes.pop("proto_path", pathlib.Path.cwd())
-            if isinstance(cls.proto_path, str):
-                cls.proto_path = pathlib.Path(cls.proto_path)
-            cls.grpc_path = attributes.pop("grpc_path", pathlib.Path.cwd())
-            if isinstance(cls.grpc_path, str):
-                cls.grpc_path = pathlib.Path(cls.grpc_path)
+            cls.proto_path = pathlib.Path(attributes.pop("proto_path", pathlib.Path.cwd()))
+            cls.grpc_path = pathlib.Path(attributes.pop("grpc_path", pathlib.Path.cwd()))
             cls.save_proto = attributes.pop("save_proto", False)
             cls._methods = {}
 
