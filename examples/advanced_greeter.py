@@ -45,6 +45,4 @@ if __name__ == "__main__":
         reflection=True,
     )
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(app.run_async())
-    loop.close()
+    app.run()

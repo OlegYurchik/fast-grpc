@@ -78,8 +78,9 @@ class FastGRPCServiceMeta(type):
 
         if not attributes.get("is_proxy", False):
             cls.name = attributes.pop("name", name)
-            cls.proto_path = attributes.pop("proto_path", pathlib.Path.cwd())
-            cls.grpc_path = attributes.pop("grpc_path", pathlib.Path.cwd())
+            cls.proto_path = pathlib.Path(attributes.pop("proto_path", pathlib.Path.cwd()))
+            cls.grpc_path = pathlib.Path(attributes.pop("grpc_path", pathlib.Path.cwd()))
+            cls.save_proto = attributes.pop("save_proto", False)
             cls._methods = {}
 
             cls._setup()
@@ -92,7 +93,8 @@ class FastGRPCServiceMeta(type):
             proto.compile_proto(service=service, proto_path=cls.proto_path,
                                 grpc_path=cls.grpc_path)
         finally:
-            proto.delete_proto(service=service, proto_path=cls.proto_path)
+            if not cls.save_proto:
+                proto.delete_proto(service=service, proto_path=cls.proto_path)
 
         grpc_path = str(cls.grpc_path)
         if grpc_path not in sys.path:

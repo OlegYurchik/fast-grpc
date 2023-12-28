@@ -25,8 +25,10 @@ class FastGRPC:
 
     def run(self):
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.run_async())
-        loop.close()
+        try:
+            loop.run_until_complete(self.run_async())
+        finally:
+            loop.close()
 
     async def run_async(self):
         await self._server.start()

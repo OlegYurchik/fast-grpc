@@ -2,12 +2,7 @@ import inspect
 from types import NoneType, UnionType
 from typing import (
     Annotated,
-    Dict,
-    FrozenSet,
     Iterable,
-    Sequence,
-    Set,
-    Tuple,
     Type,
     Union,
     get_origin,
@@ -27,21 +22,7 @@ def parse_type_sequence(name: str, python_type, args: list) -> Field:
         )
 
     inside_python_type = args[0]
-    if inside_python_type in TYPE_MAPPING:
-        grpc_type = TYPE_MAPPING[inside_python_type].value
-    elif (
-            (origin := get_origin(inside_python_type)) is not None and
-            origin in (Annotated, Union, UnionType)
-    ):
-        inside_args = list(inside_python_type.__args__)
-        field = parse_type_union(name=name, python_type=inside_python_type, args=inside_args)
-        grpc_type = field.type
-    elif inspect.isclass(inside_python_type) and issubclass(inside_python_type, BaseModel):
-        grpc_type = inside_python_type.__name__
-    else:
-        raise TypeError(
-            f"Field '{name}': unsupported type '{inside_python_type}' in type '{python_type}'.",
-        )
+    grpc_type = parse_type(name, inside_python_type, python_type)
 
     return Field(name=name, type=grpc_type, repeated=True)
 
@@ -54,38 +35,8 @@ def parse_type_mapping(name: str, python_type, args: list) -> Field:
 
     grpc_type = TYPE_MAPPING[dict].value
     python_map_key, python_map_value = args
-    map_key, map_value = None, None
-    if python_map_key in TYPE_MAPPING:
-        map_key = TYPE_MAPPING[python_map_key].value
-    elif (
-            (origin := get_origin(python_map_key)) is not None and
-            origin in (Annotated, Union, UnionType)
-    ):
-        python_map_key_args = list(python_map_key.__args__)
-        field = parse_type_union(name=name, python_type=python_map_key,
-                                 args=python_map_key_args)
-        map_key = field.type
-    else:
-        raise TypeError(
-            f"Field '{name}': unsupported type '{python_map_key}' in type '{python_type}'.",
-        )
-
-    if python_map_value in TYPE_MAPPING:
-        map_value = TYPE_MAPPING[python_map_value].value
-    elif (
-            (origin := get_origin(python_map_value)) is not None and
-            origin in (Annotated, Union, UnionType)
-    ):
-        python_map_value_args = list(python_map_value.__args__)
-        field = parse_type_union(name=name, python_type=python_map_value,
-                                 args=python_map_value_args)
-        map_value = field.type
-    elif inspect.isclass(python_map_value) and issubclass(python_map_value, BaseModel):
-        map_value = python_map_value.__name__
-    else:
-        raise TypeError(
-            f"Field '{name}': unsupported type '{python_map_value}' in type '{python_type}'.",
-        )
+    map_key = parse_type(name, python_map_key, python_type, allow_pydantic_model=False)
+    map_value = parse_type(name, python_map_value, python_type)
 
     return Field(
         name=name,
@@ -105,23 +56,28 @@ def parse_type_union(name: str, python_type, args: list) -> Field:
         )
 
     inside_python_type = args[0]
-    if inside_python_type in TYPE_MAPPING:
-        grpc_type = TYPE_MAPPING[inside_python_type].value
-    elif (
-            (origin := get_origin(inside_python_type)) is not None and
-            origin in (Annotated, Union, UnionType)
-    ):
-        inside_args = list(inside_python_type.__args__)
-        field = parse_type_union(name, inside_python_type, inside_args)
-        grpc_type = field.type
-    elif inspect.isclass(inside_python_type) and issubclass(inside_python_type, BaseModel):
-        grpc_type = inside_python_type.__name__
-    else:
-        raise TypeError(
-            f"Field '{name}': unsupported type '{inside_python_type}' in type {python_type}'.",
-        )
+    grpc_type = parse_type(name, inside_python_type, python_type)
 
     return Field(name=name, type=grpc_type)
+
+
+def parse_type(name: str, python_value, python_type, allow_pydantic_model: bool = True):
+    if python_value in TYPE_MAPPING:
+        value = TYPE_MAPPING[python_value].value
+    elif (
+            (origin := get_origin(python_value)) is not None and
+            origin in (Annotated, Union, UnionType)
+    ):
+        python_value_args = list(python_value.__args__)
+        value = parse_type_union(name=name, python_type=python_value, args=python_value_args).type
+    elif allow_pydantic_model and inspect.isclass(python_value) and issubclass(python_value, BaseModel):
+        value = python_value.__name__
+    else:
+        raise TypeError(
+            f"Field '{name}': unsupported type '{python_value}' in type '{python_type}'.",
+        )
+
+    return value
 
 
 def parse_field(name: str, field: FieldInfo) -> Field:
@@ -134,10 +90,9 @@ def parse_field(name: str, field: FieldInfo) -> Field:
         args = list(python_type.__args__)
         if origin in (Union, UnionType):
             return parse_type_union(name, python_type, args)
-        if issubclass(origin, (dict, Dict)):
+        if issubclass(origin, dict):
             return parse_type_mapping(name, python_type, args)
-        if issubclass(origin, (list, tuple, set, frozenset, Iterable, Sequence, Tuple, Set,
-                               FrozenSet)):
+        if issubclass(origin, Iterable):
             return parse_type_sequence(name, python_type, args)
         raise TypeError(f"Field '{name}': unsupported type '{python_type}'.")
     elif inspect.isclass(python_type) and issubclass(python_type, BaseModel):
