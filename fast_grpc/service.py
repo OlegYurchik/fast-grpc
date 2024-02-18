@@ -1,6 +1,7 @@
 import inspect
 import pathlib
 import sys
+import warnings
 from typing import Any, Callable, Type
 
 import grpc
@@ -8,6 +9,7 @@ from google.protobuf.json_format import MessageToDict, ParseDict
 from pydantic import BaseModel
 
 from . import proto
+from .middleware import FastGRPCMiddleware
 
 
 class grpc_method:
@@ -16,17 +18,20 @@ class grpc_method:
             name: str | None = None,
             request_model: Type[BaseModel] | None = None,
             response_model: Type[BaseModel] | None = None,
+            middlewares: list[FastGRPCMiddleware | Callable] | None = None,
             disable: bool = False,
     ):
         self._name = name
         self._request_model = request_model
         self._response_model = response_model
+        self._middlewares = middlewares
         self._disable = disable
 
     def __call__(self, function: Callable):
         async def wrapper(self, request, context):
             request_model = wrapper._grpc_method_request_model
             response_model = wrapper._grpc_method_response_model
+            middlewares = self.middlewares + wrapper._grpc_method_middlewares
 
             request = request_model.model_validate(request, from_attributes=True)
 
@@ -34,7 +39,12 @@ class grpc_method:
             if "context" in signature.parameters:
                 args["context"] = context
 
-            response = await function(**args)
+            call_coroutine = function(**args)
+            for middleware in middlewares[::-1]:
+                call_coroutine = middleware(call_coroutine, request, context)
+
+            with warnings.catch_warnings(action="ignore", category=RuntimeWarning):
+                response = await call_coroutine
 
             grpc_model = getattr(self.pb2, response_model.__name__)
             return ParseDict(
@@ -45,7 +55,6 @@ class grpc_method:
 
         signature = inspect.signature(function)
         wrapper.__name__ = function.__name__
-        wrapper._grpc_method_enabled = not self._disable
         wrapper._grpc_method_name = self._name or function.__name__
         wrapper._grpc_method_request_model = (
             self._request_model or self.get_request_model_from_signature(signature)
@@ -53,6 +62,8 @@ class grpc_method:
         wrapper._grpc_method_response_model = (
             self._response_model or self.get_response_model_from_signature(signature)
         )
+        wrapper._grpc_method_middlewares = self._middlewares
+        wrapper._grpc_method_enabled = not self._disable
 
         return wrapper
 
@@ -81,6 +92,7 @@ class FastGRPCServiceMeta(type):
             cls.proto_path = pathlib.Path(attributes.pop("proto_path", pathlib.Path.cwd()))
             cls.grpc_path = pathlib.Path(attributes.pop("grpc_path", pathlib.Path.cwd()))
             cls.save_proto = attributes.pop("save_proto", False)
+            cls.middlewares = attributes.pop("middlewares", ())
             cls._methods = {}
 
             cls._setup()

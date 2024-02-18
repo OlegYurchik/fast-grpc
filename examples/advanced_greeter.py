@@ -1,4 +1,3 @@
-import asyncio
 import pathlib
 
 from pydantic import BaseModel

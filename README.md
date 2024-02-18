@@ -35,10 +35,8 @@ app.run()
 
 ## TODO
 
-1. Add middlewares support
-2. Beautify .proto files
-3. Add returning .proto files
-4. More unit tests
+1. Add returning .proto files
+2. More unit tests
+3. Add linters
+4. Add CI/CD
 5. Add documentation
-6. Add linters
-7. Add CI/CD
