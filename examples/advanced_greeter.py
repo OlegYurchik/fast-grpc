@@ -38,10 +38,9 @@ class Greeter(FastGRPCService):
 
 
 if __name__ == "__main__":
-    app = FastGRPC(
-        Greeter(cancel_message="We do not serve Olegs"),
-        port=50051,
-        reflection=True,
-    )
+    service = Greeter(cancel_message="We do not serve Olegs")
+    app = FastGRPC(service, port=50051, reflection=True)
+
+    print(service.get_proto())  # Print .proto file content
 
     app.run()

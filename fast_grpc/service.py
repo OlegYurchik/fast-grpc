@@ -1,7 +1,7 @@
+import functools
 import inspect
 import pathlib
 import sys
-import warnings
 from typing import Any, Callable, Type
 
 import grpc
@@ -35,16 +35,17 @@ class grpc_method:
 
             request = request_model.model_validate(request, from_attributes=True)
 
-            args = {"self": self, "request": request}
-            if "context" in signature.parameters:
-                args["context"] = context
+            async def _function(request, context):
+                args = {"request": request}
+                if "context" in signature.parameters:
+                    args["context"] = context
 
-            call_coroutine = function(**args)
+                return await function(**args)
+
             for middleware in middlewares[::-1]:
-                call_coroutine = middleware(call_coroutine, request, context)
+                _function = functools.partial(middleware, _function)
 
-            with warnings.catch_warnings(action="ignore", category=RuntimeWarning):
-                response = await call_coroutine
+            response = await _function(request, context)
 
             grpc_model = getattr(self.pb2, response_model.__name__)
             return ParseDict(
@@ -186,3 +187,9 @@ class FastGRPCService(metaclass=FastGRPCServiceMeta):
 
     def get_service_name(self) -> str:
         return self.pb2.DESCRIPTOR.services_by_name[self.name].full_name
+
+    @classmethod
+    def get_proto(cls) -> str:
+        service = cls.build_proto_service()
+        content = proto.render_proto(service=service)
+        return content

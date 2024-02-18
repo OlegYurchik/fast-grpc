@@ -249,7 +249,7 @@ def test_parse_type_union_incorrect_args(faker: Faker, python_type, args: list):
 def test_parse_type_union_unsupported_type(faker: Faker, python_type, inside_python_type):
     name = faker.first_name()
     exception_text = (
-        f"Field '{name}': unsupported type '{inside_python_type}' in type {python_type}'."
+        f"Field '{name}': unsupported type '{inside_python_type}' in type '{python_type}'."
     )
 
     with pytest.raises(TypeError) as exception:

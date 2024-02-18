@@ -18,7 +18,7 @@ class LogMiddleware(FastGRPCMiddleware):
 
     async def __call__(self, next_call, request, context):
         self.logger.info("Get request")
-        response = await next_call
+        response = await next_call(request, context)
         self.logger.info("Build response")
         return response
 

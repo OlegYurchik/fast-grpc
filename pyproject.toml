@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "py-fast-grpc"
-version = "0.3.5"
+version = "0.4.0"
 description = "gRPC simple and easy to use Python framework"
 authors = ["Oleg Yurchik"]
 license = "MIT License"
