@@ -21,7 +21,7 @@ class PyTestService(FastGRPCService):
         return PyTestResponse(message=request.message)
 
 
-service_content_first = """
+SERVICE_CONTENT_FIRST = """
 syntax = "proto3";
 package pytestservice;
 
@@ -38,7 +38,7 @@ message PyTestRequest {
     string message = 1;
 }
 """
-service_content_second = """
+SERVICE_CONTENT_SECOND = """
 syntax = "proto3";
 package pytestservice;
 
@@ -60,8 +60,8 @@ message PyTestResponse {
 def test_get_proto():
     service = PyTestService()
     expected_variants = [
-        service_content_first.strip(),
-        service_content_second.strip(),
+        SERVICE_CONTENT_FIRST.strip(),
+        SERVICE_CONTENT_SECOND.strip(),
     ]
 
     assert service.get_proto().strip() in expected_variants

@@ -20,6 +20,8 @@ pydantic = {version = "^2.5.2", extras = ["email"]}
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
 faker = "^20.1.0"
+pylint = "^3.1.0"
+pylint-quotes = "^0.2.3"
 
 [build-system]
 requires = ["poetry-core"]

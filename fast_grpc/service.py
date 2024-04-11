@@ -12,7 +12,7 @@ from . import proto
 from .middleware import FastGRPCMiddleware
 
 
-class grpc_method:
+class GRPCMethod:
     def __init__(
             self,
             name: str | None = None,
@@ -29,9 +29,9 @@ class grpc_method:
 
     def __call__(self, function: Callable):
         async def wrapper(self, request, context):
-            request_model = wrapper._grpc_method_request_model
-            response_model = wrapper._grpc_method_response_model
-            middlewares = self.middlewares + wrapper._grpc_method_middlewares
+            request_model = wrapper.grpc_method_request_model
+            response_model = wrapper.grpc_method_response_model
+            middlewares = self.middlewares + wrapper.grpc_method_middlewares
 
             request = request_model.model_validate(request, from_attributes=True)
 
@@ -56,15 +56,15 @@ class grpc_method:
 
         signature = inspect.signature(function)
         wrapper.__name__ = function.__name__
-        wrapper._grpc_method_name = self._name or function.__name__
-        wrapper._grpc_method_request_model = (
+        wrapper.grpc_method_name = self._name or function.__name__
+        wrapper.grpc_method_request_model = (
             self._request_model or self.get_request_model_from_signature(signature)
         )
-        wrapper._grpc_method_response_model = (
+        wrapper.grpc_method_response_model = (
             self._response_model or self.get_response_model_from_signature(signature)
         )
-        wrapper._grpc_method_middlewares = self._middlewares
-        wrapper._grpc_method_enabled = not self._disable
+        wrapper.grpc_method_middlewares = self._middlewares
+        wrapper.grpc_method_enabled = not self._disable
 
         return wrapper
 
@@ -84,6 +84,10 @@ class grpc_method:
         return signature.return_annotation
 
 
+def grpc_method(*args, **kwargs) -> GRPCMethod:
+    return GRPCMethod(*args, **kwargs)
+
+
 class FastGRPCServiceMeta(type):
     def __init__(cls, name: str, bases: tuple[type], attributes: dict[str, Any]):
         super().__init__(name, bases, attributes)
@@ -96,10 +100,10 @@ class FastGRPCServiceMeta(type):
             cls.middlewares = attributes.pop("middlewares", ())
             cls._methods = {}
 
-            cls._setup()
+            cls._setup()  # pylint: disable=no-value-for-parameter
 
     def _setup(cls):
-        service = cls.build_proto_service()
+        service = cls.build_proto_service()  # pylint: disable=no-value-for-parameter
         try:
             content = proto.render_proto(service=service)
             proto.write_proto(service=service, proto_path=cls.proto_path, content=content)
@@ -114,7 +118,7 @@ class FastGRPCServiceMeta(type):
             sys.path.append(grpc_path)
         cls.pb2 = __import__(f"{service.name.lower()}_pb2")
         cls.pb2_grpc = __import__(f"{service.name.lower()}_pb2_grpc")
-        cls.Client = cls.get_client()
+        cls.Client = cls.get_client()  # pylint: disable=no-value-for-parameter
 
     def build_proto_service(cls) -> proto.Service:
         cls._methods.clear()
@@ -123,14 +127,14 @@ class FastGRPCServiceMeta(type):
         models = set()
         for attribute_name in dir(cls):
             attribute = getattr(cls, attribute_name)
-            if not getattr(attribute, "_grpc_method_enabled", False):
+            if not getattr(attribute, "grpc_method_enabled", False):
                 continue
 
-            method_name = attribute._grpc_method_name
-            models |= proto.gather_models(attribute._grpc_method_request_model)
-            models |= proto.gather_models(attribute._grpc_method_response_model)
-            request_message = proto.get_message_from_model(attribute._grpc_method_request_model)
-            response_message = proto.get_message_from_model(attribute._grpc_method_response_model) 
+            method_name = attribute.grpc_method_name
+            models |= proto.gather_models(attribute.grpc_method_request_model)
+            models |= proto.gather_models(attribute.grpc_method_response_model)
+            request_message = proto.get_message_from_model(attribute.grpc_method_request_model)
+            response_message = proto.get_message_from_model(attribute.grpc_method_response_model)
 
             cls._methods[method_name] = attribute
 
@@ -149,8 +153,8 @@ class FastGRPCServiceMeta(type):
         class_name = f"{cls.name}Client"
         attributes = {}
         for grpc_method_name, method in cls._methods.items():
-            request_message_class = getattr(cls.pb2, method._grpc_method_request_model.__name__)
-            response_message_class = method._grpc_method_response_model
+            request_message_class = getattr(cls.pb2, method.grpc_method_request_model.__name__)
+            response_message_class = method.grpc_method_response_model
 
             async def wrapper(
                     self,
@@ -159,7 +163,7 @@ class FastGRPCServiceMeta(type):
                     _request_message_class=request_message_class,
                     _response_message_class=response_message_class,
             ):
-                grpc_method = getattr(self._stub, _grpc_method_name)
+                grpc_method = getattr(self.stub, _grpc_method_name)
                 grpc_request = ParseDict(request.model_dump(mode="json"), _request_message_class())
                 response = await grpc_method(request=grpc_request)
                 response_dict = MessageToDict(response, preserving_proto_field_name=True)
@@ -169,13 +173,13 @@ class FastGRPCServiceMeta(type):
 
         def __init__(self, host: str, port: int):
             channel = grpc.aio.insecure_channel(f"{host}:{port}")
-            self._stub = getattr(cls.pb2_grpc, f"{cls.name}Stub")(channel)
+            self.stub = getattr(cls.pb2_grpc, f"{cls.name}Stub")(channel)
 
         attributes["__init__"] = __init__
 
         return type(class_name, (), attributes)
 
-    
+
 class FastGRPCService(metaclass=FastGRPCServiceMeta):
     is_proxy: bool = True
 

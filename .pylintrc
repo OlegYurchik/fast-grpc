@@ -1,0 +1,178 @@
+[MASTER]
+
+fail-under=10.0
+ignore-paths=.*\.venv/.*
+ignore-patterns=.lock,
+                .toml,
+                .ini,
+                .md,
+jobs=1
+limit-inference-results=100
+load-plugins=  # Add pylint_quotes after fixing
+persistent=yes
+py-version=3.11
+suggestion-mode=yes
+unsafe-load-any-extension=no
+string-quote=double
+triple-quote=double
+docstring-quote=double
+
+[MESSAGES CONTROL]
+disable=missing-class-docstring,
+        missing-module-docstring,
+        missing-function-docstring,
+        too-many-arguments,
+        duplicate-code,
+        redefined-outer-name,
+        too-few-public-methods,
+        too-many-branches,
+        too-many-locals,
+        too-many-instance-attributes,
+        arguments-differ,
+        unused-argument,
+        too-many-ancestors,
+        c-extension-no-member,
+        too-many-public-methods
+extension-pkg-whitelist=pydantic
+
+[REPORTS]
+
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+output-format=text
+reports=no
+score=yes
+
+[REFACTORING]
+
+max-nested-blocks=5
+never-returning-functions=sys.exit,argparse.parse_error
+
+[FORMAT]
+
+expected-line-ending-format=
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+indent-after-paren=4
+indent-string='    '
+max-line-length=100
+max-module-lines=1000
+single-line-class-stmt=no
+single-line-if-stmt=no
+
+[TYPECHECK]
+
+contextmanager-decorators=contextlib.contextmanager
+ignore-mixin-members=yes
+ignore-none=yes
+ignore-on-opaque-inference=yes
+ignored-classes=optparse.Values,thread._local,_thread._local
+missing-member-hint=yes
+missing-member-hint-distance=1
+missing-member-max-choices=1
+mixin-class-rgx=.*[Mm]ixin
+generated-members=
+
+[SIMILARITIES]
+
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=yes
+ignore-signatures=no
+min-similarity-lines=4
+
+[BASIC]
+
+argument-naming-style=snake_case
+attr-naming-style=snake_case
+bad-names=foo,
+          bar,
+          baz,
+          toto,
+          tutu,
+          tata
+class-attribute-naming-style=any
+class-const-naming-style=UPPER_CASE
+class-naming-style=PascalCase
+const-naming-style=UPPER_CASE
+docstring-min-length=-1
+function-naming-style=snake_case
+good-names=pk,
+           Run,
+           _
+include-naming-hint=no
+inlinevar-naming-style=any
+method-naming-style=snake_case
+module-naming-style=snake_case
+no-docstring-rgx=^_
+property-classes=abc.abstractproperty
+variable-naming-style=snake_case
+
+[LOGGING]
+
+logging-format-style=old
+logging-modules=logging
+
+[VARIABLES]
+
+allow-global-unused-variables=yes
+callbacks=cb_,
+          _cb
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
+ignored-argument-names=_.*|^ignored_|^unused_
+init-import=no
+redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
+
+[SPELLING]
+
+max-spelling-suggestions=4
+spelling-ignore-comment-directives=fmt: on,fmt: off,noqa:,noqa,nosec,isort:skip,mypy:
+spelling-store-unknown-words=no
+
+[MISCELLANEOUS]
+
+notes=FIXME,
+      XXX,
+      TODO
+
+[STRING]
+
+check-quote-consistency=no
+check-str-concat-over-line-jumps=no
+
+[CLASSES]
+
+check-protected-access-in-special-methods=no
+defining-attr-methods=__init__,
+                      __new__,
+                      setUp,
+                      __post_init__
+exclude-protected=_asdict,
+                  _fields,
+                  _replace,
+                  _source,
+                  _make
+valid-classmethod-first-arg=cls
+valid-metaclass-classmethod-first-arg=cls
+
+[DESIGN]
+
+max-args=5
+max-attributes=7
+max-bool-expr=5
+max-branches=12
+max-locals=15
+max-parents=7
+max-public-methods=20
+max-returns=6
+max-statements=50
+min-public-methods=2
+
+[IMPORTS]
+
+allow-wildcard-with-all=no
+analyse-fallback-blocks=no
+known-third-party=enchant
+
+[EXCEPTIONS]
+
+overgeneral-exceptions=builtins.BaseException,
+                       builtins.Exception

@@ -306,7 +306,7 @@ def test_parse_field_unsupported_type(faker: Faker, annotation):
     name = faker.first_name()
     exception_text = f"Field '{name}': unsupported type '{annotation}'."
     field_info = FieldInfo(annotation=annotation)
-    
+
     with pytest.raises(TypeError) as exception:
         parse_field(name=name, field=field_info)
 
@@ -327,7 +327,7 @@ def test_get_message_from_model(model: Type[BaseModel], expected_message: Messag
     assert len(message.fields) == len(expected_message.fields)
     for name, field in message.fields.items():
         assert name in expected_message.fields
-        
+
         expected_field = expected_message.fields[name]
         assert field.name == expected_field.name
         assert field.type == expected_field.type

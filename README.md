@@ -35,8 +35,7 @@ app.run()
 
 ## TODO
 
-1. Add returning .proto files
-2. More unit tests
-3. Add linters
-4. Add CI/CD
-5. Add documentation
+1. More unit tests
+2. Add linters
+3. Add CI/CD
+4. Add documentation

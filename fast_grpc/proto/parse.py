@@ -70,7 +70,11 @@ def parse_type(name: str, python_value, python_type, allow_pydantic_model: bool 
     ):
         python_value_args = list(python_value.__args__)
         value = parse_type_union(name=name, python_type=python_value, args=python_value_args).type
-    elif allow_pydantic_model and inspect.isclass(python_value) and issubclass(python_value, BaseModel):
+    elif (
+            allow_pydantic_model and
+            inspect.isclass(python_value) and
+            issubclass(python_value, BaseModel)
+    ):
         value = python_value.__name__
     else:
         raise TypeError(
@@ -127,7 +131,7 @@ def gather_models(model: Type[BaseModel]) -> set[Type[BaseModel]]:
         model = stack.pop()
         models.add(model)
         processed.add(model)
-        
+
         for field in model.model_fields.values():
             arg_stack = [field.annotation]
             while arg_stack:
