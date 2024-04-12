@@ -65,3 +65,9 @@ def test_get_proto():
     ]
 
     assert service.get_proto().strip() in expected_variants
+
+
+def test_get_service_name():
+    service = PyTestService()
+
+    assert service.get_service_name() == "pytestservice.PyTestService"

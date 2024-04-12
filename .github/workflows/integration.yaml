@@ -6,7 +6,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: snok/install-poetry@1
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: snok/install-poetry@v1
       - name: Install requirements
         run: poetry install
       - name: Check lint
@@ -16,7 +20,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: snok/install-poetry@1
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: snok/install-poetry@v1
       - name: Install requirements
         run: poetry install
       - name: Check lint

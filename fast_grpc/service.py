@@ -12,7 +12,7 @@ from . import proto
 from .middleware import FastGRPCMiddleware
 
 
-class GRPCMethod:
+class grpc_method:  # pylint: disable=invalid-name
     def __init__(
             self,
             name: str | None = None,
@@ -82,10 +82,6 @@ class GRPCMethod:
         if not issubclass(signature.return_annotation, BaseModel):
             raise TypeError("GRPC method should have pydantic model in return annotation")
         return signature.return_annotation
-
-
-def grpc_method(*args, **kwargs) -> GRPCMethod:
-    return GRPCMethod(*args, **kwargs)
 
 
 class FastGRPCServiceMeta(type):

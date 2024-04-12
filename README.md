@@ -37,5 +37,4 @@ app.run()
 
 ## TODO
 
-1. More unit tests
-2. Add documentation
+1. Add documentation
