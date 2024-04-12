@@ -1,5 +1,7 @@
 # Fast-gRPC
 
+![check](https://github.com/OlegYurchik/fast-grpc/actions/workflows/integration.yaml/badge.svg)
+
 Fast-gRPC it is simple and easy to use Python gRPC framework.
 
 ## Installation
@@ -36,6 +38,4 @@ app.run()
 ## TODO
 
 1. More unit tests
-2. Add linters
-3. Add CI/CD
-4. Add documentation
+2. Add documentation

@@ -1,0 +1,23 @@
+name: Integration
+on: [push]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: snok/install-poetry@1
+      - name: Install requirements
+        run: poetry install
+      - name: Check lint
+        run: poetry run pylint fast_grpc tests
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: snok/install-poetry@1
+      - name: Install requirements
+        run: poetry install
+      - name: Check lint
+        run: poetry run pytest tests
