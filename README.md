@@ -38,6 +38,7 @@ app.run()
 
 ## TODO
 
+* Add generating services from proto file
 * Add middlewares (interceptors) to `FastGRPC` class (for all services)
 * Add TLS support
 * Move to `uv`
