@@ -1,3 +1,6 @@
+# import sys
+# breakpoint()
+
 import asyncio
 
 from examples.advanced_greeter import HelloRequest, Greeter
@@ -13,10 +16,10 @@ class GreeterClient(Greeter.Client):
 async def main():
     greeter = GreeterClient(host="127.0.0.1", port=50051)
 
+    print("Calling Greeter say_hello...")
     text = await greeter.greeting(name="Vika")
-    print(text)
+    print("Text from response:", text)
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())

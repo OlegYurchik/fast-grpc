@@ -11,10 +11,13 @@ class HelloResponse(BaseModel):
 
 
 class Greeter(FastGRPCService):
-    @grpc_method()
+    @grpc_method
     async def say_hello(self, request: HelloRequest) -> HelloResponse:
         return HelloResponse(text=f"Hello, {request.name}!")
 
 
-app = FastGRPC(Greeter(), reflection=True)
-app.run()
+if __name__ == "__main__":
+    app = FastGRPC(Greeter(), reflection=True)
+
+    print("Running Greeter on port 50051...")
+    app.run()

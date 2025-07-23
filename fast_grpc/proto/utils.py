@@ -15,19 +15,19 @@ def render_proto(service: Service):
     return template.render(service=service)
 
 
-def write_proto(service: Service, proto_path: pathlib.Path, content: str):
+def write_proto(service_name: str, proto_path: pathlib.Path, content: str):
     proto_path.mkdir(parents=True, exist_ok=True)
-    proto_file_path = proto_path / f"{service.name.lower()}.proto"
+    proto_file_path = proto_path / f"{service_name.lower()}.proto"
     proto_file_path.write_text(content)
 
 
-def compile_proto(service: Service, proto_path: pathlib.Path, grpc_path: pathlib.Path):
+def compile_proto(service_name: str, proto_path: pathlib.Path, grpc_path: pathlib.Path):
     grpc_path.mkdir(parents=True, exist_ok=True)
     protoc_args = [
         f"--proto_path={proto_path}",
         f"--python_out={grpc_path}",
         f"--grpc_python_out={grpc_path}",
-        str(proto_path / f"{service.name.lower()}.proto"),
+        str(proto_path / f"{service_name.lower()}.proto"),
         f"--proto_path={proto_path}",
     ]
     status_code = protoc.main(protoc_args)
@@ -36,6 +36,6 @@ def compile_proto(service: Service, proto_path: pathlib.Path, grpc_path: pathlib
         raise RuntimeError("Protobuf compilation failed")
 
 
-def delete_proto(service: Service, proto_path: pathlib.Path):
-    proto_file_path = proto_path / f"{service.name.lower()}.proto"
+def delete_proto(service_name: str, proto_path: pathlib.Path):
+    proto_file_path = proto_path / f"{service_name.lower()}.proto"
     proto_file_path.unlink(missing_ok=True)

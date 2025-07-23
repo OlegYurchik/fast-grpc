@@ -92,7 +92,7 @@ def parse_field(name: str, field: FieldInfo) -> Field:
         grpc_type = TYPE_MAPPING[python_type].value
     elif (origin := get_origin(python_type)) is not None:
         args = list(python_type.__args__)
-        if origin in (Union, UnionType):
+        if origin in (Annotated, Union, UnionType):
             return parse_type_union(name, python_type, args)
         if issubclass(origin, dict):
             return parse_type_mapping(name, python_type, args)

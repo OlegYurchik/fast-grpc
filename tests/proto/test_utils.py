@@ -22,7 +22,6 @@ def test_render_proto(faker: Faker):
 
 
 def test_write_proto(tmp_path: pathlib.Path):
-    service = Service(name="Test", methods={}, messages={})
     content = """
     syntax = "proto3";
     package test;
@@ -30,13 +29,12 @@ def test_write_proto(tmp_path: pathlib.Path):
     service Test {}
     """
 
-    write_proto(service=service, proto_path=tmp_path, content=content)
+    write_proto(service_name="Test", proto_path=tmp_path, content=content)
 
     assert (tmp_path / "test.proto").read_text().strip() == content.strip()
 
 
 def test_compile_proto(tmp_path: pathlib.Path):
-    service = Service(name="Test", methods={}, messages={})
     proto_content = """
     syntax = "proto3";
     package test;
@@ -45,13 +43,12 @@ def test_compile_proto(tmp_path: pathlib.Path):
     """
     (tmp_path / "test.proto").write_text(data=proto_content)
 
-    compile_proto(service=service, proto_path=tmp_path, grpc_path=tmp_path)
+    compile_proto(service_name="Test", proto_path=tmp_path, grpc_path=tmp_path)
 
     assert (tmp_path / "test_pb2.py").is_file() and (tmp_path / "test_pb2_grpc.py").is_file()
 
 
 def test_delete_proto(tmp_path: pathlib.Path):
-    service = Service(name="Test", methods={}, messages={})
     proto_content = """
     syntax = "proto3";
     package test;
@@ -60,6 +57,6 @@ def test_delete_proto(tmp_path: pathlib.Path):
     """
     (tmp_path / "test.proto").write_text(data=proto_content)
 
-    delete_proto(service=service, proto_path=tmp_path)
+    delete_proto(service_name="Test", proto_path=tmp_path)
 
     assert not (tmp_path / "test.proto").is_file()

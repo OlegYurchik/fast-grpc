@@ -1,6 +1,7 @@
 # Fast-gRPC
 
-![check](https://github.com/OlegYurchik/fast-grpc/actions/workflows/integration.yaml/badge.svg)
+![Integration](https://github.com/OlegYurchik/fast-grpc/actions/workflows/integration.yaml/badge.svg)
+![Documentation](https://fast-grpc.readthedocs.io/en/latest/?badge=latest)
 
 Fast-gRPC it is simple and easy to use Python gRPC framework.
 
@@ -37,4 +38,7 @@ app.run()
 
 ## TODO
 
-1. Add documentation
+* Add middlewares (interceptors) to `FastGRPC` class (for all services)
+* Add TLS support
+* Move to `uv`
+* Add documentation
