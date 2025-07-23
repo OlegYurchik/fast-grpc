@@ -32,7 +32,7 @@ async def main():
     app = FastGRPC(Greeter(), reflection=True)
 
     print("Running Greeter on port 50051...")
-    app_task = loop.create_task(app.run_async()) 
+    app_task = loop.create_task(app.run_async())
 
     print("Waiting 5 seconds...")
     await asyncio.sleep(5)
@@ -40,9 +40,9 @@ async def main():
     client = GreeterInterface.Client(host="127.0.0.1", port=50051)
     request = HelloRequest(name="Oleg")
     print("Calling Greeting say_hello...")
-    response = await client.say_hello(request=request)
+    response = await client.say_hello(request=request)  # pylint: disable=no-member
     print("Text from response:", response.text)
-    
+
     app_task.cancel()
     try:
         await app_task

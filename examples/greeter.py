@@ -1,5 +1,6 @@
-from fast_grpc import FastGRPC, FastGRPCService, grpc_method
 from pydantic import BaseModel
+
+from fast_grpc import FastGRPC, FastGRPCService, grpc_method
 
 
 class HelloRequest(BaseModel):

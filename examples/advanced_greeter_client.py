@@ -9,7 +9,7 @@ from examples.advanced_greeter import HelloRequest, Greeter
 class GreeterClient(Greeter.Client):
     async def greeting(self, name: str) -> str:
         request = HelloRequest(name=name)
-        response = await self.say_hello(request=request)
+        response = await self.say_hello(request=request)  # pylint: disable=no-member
         return response.text
 
 

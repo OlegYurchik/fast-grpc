@@ -147,7 +147,7 @@ def grpc_method(
             response_model=response_model,
             middlewares=tuple(middlewares),
             enabled=not disable,
-        )        
+        )
 
     if function is not None:
         return decorator(function=function)
@@ -164,12 +164,11 @@ class FastGRPCServiceMeta(type):
         cls.save_proto = attributes.pop("save_proto", False)
         cls.middlewares = tuple(attributes.pop("middlewares", ()))
 
-        cls._grpc_methods = cls._gather_grpc_methods()
+        cls._grpc_methods = cls._gather_grpc_methods()  # pylint: disable=no-value-for-parameter
         cls._proto_service = cls.get_proto_service(
             name=cls.name,
             grpc_methods=cls._grpc_methods,
         )
-        cls.pb2, cls.pb2_grpc, cls.Client = None, None, None
         if cls.is_enabled and not cls.is_proxy:
             cls.pb2, cls.pb2_grpc = cls.generate_pb2(
                 proto_service=cls._proto_service,
@@ -177,7 +176,7 @@ class FastGRPCServiceMeta(type):
                 grpc_path=cls.grpc_path,
                 save_proto=cls.save_proto,
             )
-            cls.Client = cls.generate_client(
+            cls.Client: type = cls.generate_client(
                 name=cls.name,
                 grpc_methods=cls._grpc_methods,
                 pb2=cls.pb2,
@@ -199,7 +198,7 @@ class FastGRPCServiceMeta(type):
         if pb2_grpc_file.is_file():
             pb2_grpc_file.unlink()
 
-    def _gather_grpc_methods(cls) -> dict[str, Callable]:
+    def _gather_grpc_methods(cls) -> dict[str, GRPCMethod]:
         grpc_methods = {}
         for attribute_name in dir(cls):
             attribute = getattr(cls, attribute_name)
@@ -252,7 +251,7 @@ class FastGRPCServiceMeta(type):
         finally:
             if not save_proto:
                 proto.delete_proto(service_name=service_name, proto_path=proto_path)
-        
+
         grpc_path = str(grpc_path)
         if grpc_path not in sys.path:
             sys.path.append(grpc_path)
@@ -281,8 +280,8 @@ class FastGRPCServiceMeta(type):
                 grpc_response_dict = MessageToDict(
                     grpc_response_message,
                     preserving_proto_field_name=True,
-                )                
-                return grpc_method.response_model.model_validate(grpc_response_dict)
+                )
+                return _grpc_method.response_model.model_validate(grpc_response_dict)
 
             attributes[grpc_method_name] = wrapper
             for alias in grpc_method.aliases:
