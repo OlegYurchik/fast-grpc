@@ -9,6 +9,9 @@
 # Python dsitribution files
 dist/
 
+# Project environment files
+.env
+
 # IDE configurations
 .idea/
 .vscode/

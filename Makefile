@@ -1,11 +1,14 @@
-publish:
+-include .env
+export
 
+publish:
+	python -m poetry publish --build --username=${PYPI_USER} --password=${PYPI_PASSWORD}
 
 lint:
-	pylint .
+	python -m pylint .
 
 test:
-	pytest tests
+	python -m pytest tests
 
 docs:
 	python -m mkdocs serve
