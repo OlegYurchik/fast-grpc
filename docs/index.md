@@ -13,5 +13,3 @@ boilerplate while maintaining full protocol compatibility.
 - Building gRPC backends with minimal boilerplate
 - Generating type-safe APIs with built-in validation
 - Modernizing legacy gRPC services
-
-[Get Started](get_started.md)

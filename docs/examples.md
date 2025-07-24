@@ -91,5 +91,3 @@ if __name__ == "__main__":
 **reflection=True**: Enables gRPC reflection for service discovery
 
 **app.run()**: Starts the server on default port 50051
-
-[API Reference](api_reference.md)
