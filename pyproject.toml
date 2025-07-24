@@ -23,6 +23,9 @@ pytest = "^7.4.3"
 faker = "^20.1.0"
 pylint = "^3.1.0"
 pylint-quotes = "^0.2.3"
+mkdocs = "^1.6.1"
+mkdocs-material = "^9.6.15"
+mkdocstrings = {version = "^0.30.0", extras = ["python"]}
 
 [build-system]
 requires = ["poetry-core"]

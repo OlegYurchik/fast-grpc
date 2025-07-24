@@ -150,6 +150,38 @@ def grpc_method(
         middlewares: Iterable[FastGRPCMiddleware | Callable] = (),
         disable: bool = False,
 ):
+    """Decorator for setting method as gRPC.
+    
+    Args:
+        function (Callable | None): Original request handler.
+        name (str | None): Name for gRPC method.
+        request_model (type[pydantic.BaseModel] | None): Model for describe request data.
+        response_model (type[pydantic.BaseModel] | None): Model for describe response data.
+        middlewares (Iterable[FastGRPCMiddleware | Callable]): Iterable of middlewares.
+        disable (bool): Flag for enable/disable gRPC method.
+
+    Example:
+        ```python
+        from fast_grpc import FastGRPCService, grpc_method
+        from pydantic import BaseModel
+
+        class ExampleService(FastGRPCService):
+            @grpc_method
+            async def ping(self, request: BaseModel) -> BaseModel:
+                ...
+
+            @grpc_method(
+                name="isHealth",
+                request_model=BaseModel,
+                response_model=BaseModel,
+                middlewares=(),
+                disable=False,
+            )
+            async def is_health(self, request, context):
+                ...
+        ```
+    """
+
     def decorator(function: Callable) -> GRPCMethod:
         return GRPCMethod(
             function=function,
@@ -318,6 +350,8 @@ class FastGRPCServiceMeta(type):
 
 
 class FastGRPCService(metaclass=FastGRPCServiceMeta):
+    """Implementation of gRPC service."""
+
     is_proxy = True
 
     def __getattribute__(self, __name: str) -> Any:
@@ -327,10 +361,22 @@ class FastGRPCService(metaclass=FastGRPCServiceMeta):
         return object.__getattribute__(self, __name)
 
     def get_service_name(self) -> str:
+        """Metod for getting service full name from pb2.
+        
+        Returns:
+            Full name string of service from pb2.
+        """
+
         return self.pb2.DESCRIPTOR.services_by_name[self.name].full_name
 
     @classmethod
     def get_proto(cls) -> str:
+        """Render and return content of proto file for this gRPC service.
+        
+        Returns:
+            Protobuf file content string.
+        """
+
         content = proto.render_proto(service=cls._proto_service)
         return content
 
@@ -340,6 +386,12 @@ class FastGRPCService(metaclass=FastGRPCServiceMeta):
             proto_file: str | pathlib.Path,
             grpc_path: str | pathlib.Path = pathlib.Path.cwd(),
     ) -> type[Self]:
+        """Create gRPC service interface from proto file.
+
+        Returns:
+            New service class, based on FastGRPCService.
+        """
+
         proto_file = pathlib.Path(proto_file)
         proto_path = proto_file.parent
         grpc_path = pathlib.Path(grpc_path)

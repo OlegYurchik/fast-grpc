@@ -2,6 +2,8 @@ import enum
 
 
 class StatusCode(enum.IntEnum):
+    """Status codes enum for describing gRPC methods response codes."""
+
     OK = 0
     CANCELLED = 1
     UNKNOWN = 2

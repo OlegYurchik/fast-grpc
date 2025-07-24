@@ -7,12 +7,24 @@ from .service import FastGRPCService
 
 
 class FastGRPC:
-    """FastGRPC server application.
+    """Server application.
 
     Args:
-        *services (:obj:`list` of :obj:`FastGRPCService`): list of services.
-        port (int): port for listen requests. Defaults to 50051.
-        reflection (bool): flag for enable server reflection. Defaults to False.
+        *services (tuple[FastGRPCService]): Tuple of Fast-gRPC services.
+        loop (asyncio.AbstractEventLoop): Async event loop for running server.
+        port (int): Port for listen requests.
+        reflection (bool): Flag for enable/disable server gRPC reflection.
+
+    Example:
+        ```python
+        from fast_grpc import FastGRPC, FastGRPCService, grpc_method
+
+        class ExampleService(FastGRPCService):
+            ...
+
+        app = FastGRPC(ExampleService())
+        app.run()
+        ```
     """
 
     def __init__(
@@ -35,10 +47,16 @@ class FastGRPC:
             grpc_reflection.enable_server_reflection(service_names, self._server)
 
     def add_service(self, service: FastGRPCService):
-        """Add service.
+        """Add service to server.
 
         Args:
-            service(:obj:`FastGRPCService`): service.
+            service (FastGRPCService): gRPC service.
+
+        Example:
+            ```python
+            app = FastGRPC()
+            app.add_service(ExampleService())
+            ```
         """
 
         register_function = getattr(service.pb2_grpc, f"add_{service.name}Servicer_to_server")
@@ -53,7 +71,14 @@ class FastGRPC:
             self._loop.close()
 
     async def run_async(self):
-        """Run server."""
+        """Run server.
+        
+        Example:
+            ```python
+            app = FastGRPC()
+            await app.run_async()
+            ```
+        """
 
         await self._server.start()
         await self._server.wait_for_termination()
