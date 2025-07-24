@@ -29,19 +29,22 @@ if __name__ == "__main__":
     app.run()
 ```
 
-1. Importing Dependencies
+### Importing Dependencies
 
 ```python
 from pydantic import BaseModel
 from fast_grpc import FastGRPC, FastGRPCService, grpc_method
 ```
 
-* **Pydantic's BaseModel**: Used to define strongly-typed data models for requests and responses
-* **FastGRPC**: The core application class that manages the gRPC server
-* **FastGRPCService**: Base class for gRPC services (must be inherited)
-* **grpc_method**: Decorator that registers methods as gRPC endpoints
+**Pydantic's BaseModel**: Used to define strongly-typed data models for requests and responses
 
-2. Defining Data Models
+**FastGRPC**: The core application class that manages the gRPC server
+
+**FastGRPCService**: Base class for gRPC services (must be inherited)
+
+**grpc_method**: Decorator that registers methods as gRPC endpoints
+
+### Defining Data Models
 
 ```python
 class HelloRequest(BaseModel):
@@ -51,12 +54,13 @@ class HelloResponse(BaseModel):
     text: str
 ```
 
-* **HelloRequest**: Input model with required name field (string)
-* **HelloResponse**: Output model with text field (string)
+**HelloRequest**: Input model with required name field (string)
+
+**HelloResponse**: Output model with text field (string)
 
 These models provide automatic validation and serialization
 
-3. Creating the gRPC Service
+### Creating the gRPC Service
 
 ```python
 class Greeter(FastGRPCService):
@@ -65,12 +69,15 @@ class Greeter(FastGRPCService):
         return HelloResponse(text=f"Hello, {request.name}!")
 ```
 
-* **Inherits from FastGRPCService**: Required for all gRPC services
-* **@grpc_method decorator**: Marks say_hello as a gRPC endpoint
-* **Type annotations**: Ensure request/response types are strictly enforced
-* **Business logic**: Simple greeting generation using request data
+**Inherits from FastGRPCService**: Required for all gRPC services
 
-4. Server Initialization and Execution
+**@grpc_method decorator**: Marks say_hello as a gRPC endpoint
+
+**Type annotations**: Ensure request/response types are strictly enforced
+
+**Business logic**: Simple greeting generation using request data
+
+### Server Initialization and Execution
 
 ```python
 if __name__ == "__main__":
@@ -79,8 +86,10 @@ if __name__ == "__main__":
     app.run()
 ```
 
-* **FastGRPC()**: Creates the main application instance
-* **reflection=True**: Enables gRPC reflection for service discovery
-* **app.run()**: Starts the server on default port 50051
+**FastGRPC()**: Creates the main application instance
+
+**reflection=True**: Enables gRPC reflection for service discovery
+
+**app.run()**: Starts the server on default port 50051
 
 [API Reference](api_reference.md)
