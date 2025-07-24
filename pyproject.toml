@@ -29,7 +29,6 @@ pylint-quotes = "^0.2.3"
 mkdocs = "^1.6.1"
 mkdocs-material = "^9.6.15"
 mkdocstrings = {version = "^0.30.0", extras = ["python"]}
-mkdocs-codeinclude-plugin = "^0.2.1"
 
 [build-system]
 requires = ["poetry-core"]

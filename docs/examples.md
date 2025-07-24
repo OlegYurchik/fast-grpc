@@ -2,8 +2,31 @@
 
 ## Simple Greeter
 
-```{codeinclude} examples/greeter.py
-:language: python
+```python
+from pydantic import BaseModel
+
+from fast_grpc import FastGRPC, FastGRPCService, grpc_method
+
+
+class HelloRequest(BaseModel):
+    name: str
+
+
+class HelloResponse(BaseModel):
+    text: str
+
+
+class Greeter(FastGRPCService):
+    @grpc_method
+    async def say_hello(self, request: HelloRequest) -> HelloResponse:
+        return HelloResponse(text=f"Hello, {request.name}!")
+
+
+if __name__ == "__main__":
+    app = FastGRPC(Greeter(), reflection=True)
+
+    print("Running Greeter on port 50051...")
+    app.run()
 ```
 
 1. Importing Dependencies
@@ -59,3 +82,5 @@ if __name__ == "__main__":
 * **FastGRPC()**: Creates the main application instance
 * **reflection=True**: Enables gRPC reflection for service discovery
 * **app.run()**: Starts the server on default port 50051
+
+[API Reference](api_reference.md)

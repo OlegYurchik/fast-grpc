@@ -29,3 +29,5 @@ class Greeter(FastGRPCService):
 app = FastGRPC(Greeter(), reflection=True)
 app.run()
 ```
+
+[Examples](examples.md)

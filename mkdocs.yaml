@@ -3,7 +3,7 @@ nav:
   - Home: index.md
   - Get Started: get_started.md
   - Examples: examples.md
-  - API Reference: reference.md
+  - API Reference: api_reference.md
 
 theme:
   name: material
@@ -51,7 +51,6 @@ plugins:
             show_source: false
             crossref: true
             anchor: true
-  - codeinclude
 
 markdown_extensions:
   - admonition
