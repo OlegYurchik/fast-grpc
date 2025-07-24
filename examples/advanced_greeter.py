@@ -34,7 +34,8 @@ class Greeter(FastGRPCService):
     is_proxy = False
     disabled = False
 
-    name = "CustomGreeter"
+    name = "AdvancedGreeter"
+    package_name = "fast_grpc.examples.advanced_greeter"
     proto_path = pathlib.Path(__file__).parent
     grpc_path = pathlib.Path(__file__).parent
     save_proto = False

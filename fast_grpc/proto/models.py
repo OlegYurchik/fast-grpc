@@ -35,6 +35,7 @@ class Method(BaseModel):
 
 
 class Service(BaseModel):
+    package_name: str
     name: str
     methods: dict[str, Method]
     messages: dict[str, Message]

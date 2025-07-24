@@ -3,20 +3,26 @@ import inspect
 import pathlib
 import sys
 import weakref
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Self
 
 import grpc
+from google._upb._message import MessageMeta
 from google.protobuf.json_format import MessageToDict, ParseDict
+from protobuf_to_pydantic import msg_to_pydantic_model
 from pydantic import BaseModel
 
 from . import proto
 from .middleware import FastGRPCMiddleware
 
 
+async def _do_nothing(request):
+    pass
+
+
 class GRPCMethod:
     def __init__(
             self,
-            function: Callable,
+            function: Callable = _do_nothing,
             name: str | None = None,
             request_model: type[BaseModel] | None = None,
             response_model: type[BaseModel] | None = None,
@@ -26,7 +32,12 @@ class GRPCMethod:
         self._function = function
 
         names = (name, function.__name__)
-        names = tuple(filter(None, names))
+        names = [
+            name for name in names
+            if name and name != "_do_nothing"
+        ]
+        if not names:
+            raise ValueError("Parameter 'name' must be provided")
         self._name = names[0]
         self._aliases = tuple(set(names) - {self._name})
 
@@ -159,6 +170,7 @@ class FastGRPCServiceMeta(type):
         cls.is_enabled = not attributes.get("disabled", False)
         cls.is_proxy = attributes.get("is_proxy", False)
         cls.name = attributes.pop("name", name)
+        cls.package_name = attributes.pop("package_name", name.lower())
         cls.proto_path = pathlib.Path(attributes.pop("proto_path", pathlib.Path.cwd()))
         cls.grpc_path = pathlib.Path(attributes.pop("grpc_path", pathlib.Path.cwd()))
         cls.save_proto = attributes.pop("save_proto", False)
@@ -213,7 +225,11 @@ class FastGRPCServiceMeta(type):
     def get_proto_service(
             name: str,
             grpc_methods: dict[str, GRPCMethod],
+            package_name: str | None = None,
     ) -> proto.Service:
+        if package_name is None:
+            package_name = name.lower()
+
         methods = {}
         messages = {}
         models = set()
@@ -232,7 +248,12 @@ class FastGRPCServiceMeta(type):
                 message = proto.get_message_from_model(model)
                 messages[message.name] = message
 
-        return proto.Service(name=name, methods=methods, messages=messages)
+        return proto.Service(
+            package_name=package_name,
+            name=name,
+            methods=methods,
+            messages=messages,
+        )
 
     @staticmethod
     def generate_pb2(
@@ -241,22 +262,22 @@ class FastGRPCServiceMeta(type):
             grpc_path: pathlib.Path,
             save_proto: bool = False,
     ) -> tuple:
-        service_name = proto_service.name.lower()
+        file_prefix = proto_service.name.lower()
+        proto_file = proto_path / f"{file_prefix}.proto"
         try:
             content = proto.render_proto(service=proto_service)
-            proto.write_proto(service_name=service_name, proto_path=proto_path,
-                              content=content)
-            proto.compile_proto(service_name=service_name, proto_path=proto_path,
+            proto_file.write_text(data=content)
+            proto.compile_proto(proto_file=proto_file, proto_path=proto_path,
                                 grpc_path=grpc_path)
         finally:
             if not save_proto:
-                proto.delete_proto(service_name=service_name, proto_path=proto_path)
+                proto_file.unlink()
 
         grpc_path = str(grpc_path)
         if grpc_path not in sys.path:
             sys.path.append(grpc_path)
-        pb2 = __import__(f"{service_name}_pb2")
-        pb2_grpc = __import__(f"{service_name}_pb2_grpc")
+        pb2 = __import__(f"{file_prefix}_pb2")
+        pb2_grpc = __import__(f"{file_prefix}_pb2_grpc")
 
         return pb2, pb2_grpc
 
@@ -312,3 +333,59 @@ class FastGRPCService(metaclass=FastGRPCServiceMeta):
     def get_proto(cls) -> str:
         content = proto.render_proto(service=cls._proto_service)
         return content
+
+    @classmethod
+    def from_proto(
+            cls,
+            proto_file: str | pathlib.Path,
+            grpc_path: str | pathlib.Path = pathlib.Path.cwd(),
+    ) -> type[Self]:
+        proto_file = pathlib.Path(proto_file)
+        proto_path = proto_file.parent
+        grpc_path = pathlib.Path(grpc_path)
+        if not proto_file.is_file():
+            raise ValueError(f"Proto file {str(proto_file)} not existed")
+        if proto_file.suffix != ".proto":
+            raise ValueError(
+                f"Proto file must have '.proto' extension, not '{proto_file.suffix}'",
+            )
+
+        proto.compile_proto(
+            proto_file=proto_file,
+            proto_path=proto_path,
+            grpc_path=grpc_path,
+        )
+        if (grpc_path_str := str(grpc_path)) not in sys.path:
+            sys.path.append(grpc_path_str)
+        file_prefix = proto_file.stem
+        pb2 = __import__(f"{file_prefix}_pb2")
+
+        methods = {}
+        messages = {}
+        for attribute_name in dir(pb2):
+            attribute = getattr(pb2, attribute_name)
+            if not isinstance(attribute, MessageMeta):
+                continue
+
+            message_class = msg_to_pydantic_model(attribute)
+            messages[message_class.__name__] = message_class
+        if not pb2.DESCRIPTOR.services_by_name:
+            raise ValueError(f"Generated pb2 file from '{proto_file}' have no services")
+        service_name = tuple(pb2.DESCRIPTOR.services_by_name)[0]
+        for method in pb2.DESCRIPTOR.services_by_name[service_name].methods:
+            grpc_method = GRPCMethod(
+                name=method.name,
+                request_model=messages[method.input_type.name],
+                response_model=messages[method.output_type.name],
+            )
+            methods[grpc_method.name] = grpc_method
+
+        cls_name = service_name
+        bases = ()
+        attributes = methods | {
+            "name": service_name,
+            "package_name": pb2.DESCRIPTOR.package,
+            "proto_path": proto_path,
+            "grpc_path": grpc_path,
+        }
+        return FastGRPCServiceMeta(cls_name, bases, attributes)

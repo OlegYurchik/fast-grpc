@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "py-fast-grpc"
-version = "0.4.0"
+version = "1.0.0"
 description = "gRPC simple and easy to use Python framework"
 authors = ["Oleg Yurchik"]
 license = "MIT License"
@@ -16,6 +16,7 @@ grpcio-reflection = "^1.59.3"
 grpcio-tools = "^1.59.3"
 jinja2 = "^3.1.2"
 pydantic = {version = "^2.5.2", extras = ["email"]}
+protobuf-to-pydantic = {version = "^0.3.3.1", extras = ["all"]}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package {{ service.name | lower }};
+package {{ service.package_name }};
 
 service {{ service.name }} {
 {% for method in service.methods.values() %}

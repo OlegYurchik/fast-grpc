@@ -41,7 +41,7 @@ async def main():
     request = HelloRequest(name="Oleg")
     print("Calling Greeting say_hello...")
     response = await client.say_hello(request=request)  # pylint: disable=no-member
-    print("Text from response:", response.text)
+    print("Response:", response.model_dump(mode="json"))
 
     app_task.cancel()
     try:
@@ -50,4 +50,5 @@ async def main():
         pass
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
