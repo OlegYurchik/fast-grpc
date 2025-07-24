@@ -4,14 +4,10 @@ build:
   tools:
     python: "3.13"
   jobs:
-    install:
-    - pip install --group 'docs'
+    post_install:
+      - pip install poetry
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --with docs
 
 mkdocs:
   configuration: mkdocs.yaml
   fail_on_warning: false
-
-python:
-  install:
-    - method: pip
-      path: .
