@@ -1,3 +1,6 @@
+publish:
+
+
 lint:
 	pylint .
 

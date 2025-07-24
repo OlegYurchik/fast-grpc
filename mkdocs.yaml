@@ -1,7 +1,7 @@
 site_name: Fast-gRPC
 nav:
   - Home: index.md
-  - Quick Start: quick_start.md
+  - Get Started: get_started.md
   - Examples: examples.md
   - API Reference: reference.md
 
@@ -51,6 +51,7 @@ plugins:
             show_source: false
             crossref: true
             anchor: true
+  - codeinclude
 
 markdown_extensions:
   - admonition
