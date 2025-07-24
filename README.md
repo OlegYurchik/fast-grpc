@@ -1,7 +1,7 @@
 # Fast-gRPC
 
 ![Integration](https://github.com/OlegYurchik/fast-grpc/actions/workflows/integration.yaml/badge.svg)
-![Documentation](https://fast-grpc.readthedocs.io/en/latest/?badge=latest)
+![Documentation](https://app.readthedocs.org/projects/fast-grpc/badge/?version=latest)
 
 Fast-gRPC it is simple and easy to use Python gRPC framework.
 
@@ -27,7 +27,7 @@ class HelloResponse(BaseModel):
 
 
 class Greeter(FastGRPCService):
-    @grpc_method()
+    @grpc_method
     async def say_hello(self, request: HelloRequest) -> HelloResponse:
         return HelloResponse(text=f"Hello, {request.name}!")
 
@@ -38,8 +38,7 @@ app.run()
 
 ## TODO
 
-* Add generating services from proto file
+* Add documentation
 * Add middlewares (interceptors) to `FastGRPC` class (for all services)
 * Add TLS support
 * Move to `uv`
-* Add documentation

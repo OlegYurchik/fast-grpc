@@ -3,7 +3,7 @@
 
 import asyncio
 
-from examples.advanced_greeter import HelloRequest, Greeter
+from examples.advanced_greeter import Greeter, HelloRequest
 
 
 class GreeterClient(Greeter.Client):

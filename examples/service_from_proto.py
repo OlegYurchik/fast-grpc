@@ -1,8 +1,9 @@
 import asyncio
 import pathlib
 
-from fast_grpc import FastGRPC, FastGRPCService, grpc_method
 from pydantic import BaseModel
+
+from fast_grpc import FastGRPC, FastGRPCService, grpc_method
 
 
 class Meta(BaseModel):
@@ -40,8 +41,8 @@ async def main():
     await asyncio.sleep(5)
 
     proto_file = pathlib.Path(__file__).parent / "service_from_proto.proto"
-    ImportedExampleService = FastGRPCService.from_proto(proto_file=proto_file)
-    client = ImportedExampleService.Client(host="127.0.0.1", port=50051)
+    imported_service_cls = FastGRPCService.from_proto(proto_file=proto_file)
+    client = imported_service_cls.Client(host="127.0.0.1", port=50051)
 
     print("Calling Example test...")
     request = ExampleRequest(request="avada_kedavra")

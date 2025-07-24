@@ -1,18 +1,12 @@
 import inspect
 from types import NoneType, UnionType
-from typing import (
-    Annotated,
-    Iterable,
-    Type,
-    Union,
-    get_origin,
-)
+from typing import Annotated, Iterable, Type, Union, get_origin
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 from .enums import TYPE_MAPPING
-from .models import Message, Field
+from .models import Field, Message
 
 
 def parse_type_sequence(name: str, python_type, args: list) -> Field:

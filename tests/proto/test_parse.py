@@ -1,7 +1,7 @@
 import pathlib
 import uuid
 from functools import reduce
-from typing import Dict, FrozenSet, Iterable, List, Optional, Set, Sequence, Tuple, Type, Union
+from typing import Dict, FrozenSet, Iterable, List, Optional, Sequence, Set, Tuple, Type, Union
 
 import pytest
 from faker import Faker
@@ -28,6 +28,7 @@ from fast_grpc.proto.parse import (
     parse_type_sequence,
     parse_type_union,
 )
+
 from .models import (
     FIRST_FIELDS,
     FOURTH_FIELDS,

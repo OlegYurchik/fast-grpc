@@ -5,7 +5,6 @@ from grpc_tools import protoc
 
 from .models import Service
 
-
 TEMPLATE_DIR_PATH = pathlib.Path(__file__).parent / "templates"
 JINJA_ENV = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATE_DIR_PATH), trim_blocks=True)
 

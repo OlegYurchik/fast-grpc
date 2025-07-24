@@ -6,7 +6,7 @@ import weakref
 from typing import Any, Callable, Iterable, Self
 
 import grpc
-from google._upb._message import MessageMeta
+from google._upb._message import MessageMeta  # pylint: disable=no-name-in-module
 from google.protobuf.json_format import MessageToDict, ParseDict
 from protobuf_to_pydantic import msg_to_pydantic_model
 from pydantic import BaseModel
