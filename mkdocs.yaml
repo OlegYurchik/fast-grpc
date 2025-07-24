@@ -1,9 +1,9 @@
 site_name: Fast-gRPC
 nav:
-  - Home: en/index.md
-  - Quick Start: en/quick_start.md
-  - Examples: en/examples.md
-  - API Reference: en/reference.md
+  - Home: index.md
+  - Quick Start: quick_start.md
+  - Examples: examples.md
+  - API Reference: reference.md
 
 theme:
   name: material
