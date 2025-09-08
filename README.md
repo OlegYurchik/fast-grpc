@@ -38,7 +38,5 @@ app.run()
 
 ## TODO
 
-* Add documentation
-* Add middlewares (interceptors) to `FastGRPC` class (for all services)
 * Add TLS support
-* Move to `uv`
+* Add `enum`, `oneof`, `deprecated`, `reserved`

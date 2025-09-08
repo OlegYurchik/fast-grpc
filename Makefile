@@ -2,7 +2,8 @@
 export
 
 publish:
-	python -m poetry publish --build --username=${PYPI_USER} --password=${PYPI_PASSWORD}
+	python -m poetry config pypi-token.pypi ${PYPI_TOKEN}
+	python -m poetry publish --build
 
 lint:
 	python -m pylint .

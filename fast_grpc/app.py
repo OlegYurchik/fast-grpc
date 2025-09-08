@@ -1,9 +1,40 @@
 import asyncio
+import functools
+from typing import Callable
 
+import grpc
 from grpc.aio import server
+from grpc_interceptor.exceptions import GrpcException
+from grpc_interceptor.server import AsyncServerInterceptor
 from grpc_reflection.v1alpha import reflection as grpc_reflection
 
+from .middleware import FastGRPCMiddleware
 from .service import FastGRPCService
+
+
+class _FastGRPCInterceptor(AsyncServerInterceptor):
+    def __init__(
+            self,
+            middlewares: tuple[FastGRPCService | Callable] = (),
+    ):
+        self._middlewares = middlewares
+
+    async def intercept(
+            self,
+            method: Callable,
+            request_or_generator,
+            context: grpc.ServicerContext,
+            method_name: str,
+    ):
+        async def wrapper(request, context):
+            coroutine_or_generator = method(request_or_generator, context)
+            if hasattr(coroutine_or_generator, "__aiter__"):
+                return coroutine_or_generator
+            return await coroutine_or_generator
+
+        for middleware in self._middlewares[::-1]:
+            wrapper = functools.partial(middleware, wrapper)
+        return await wrapper(request_or_generator, context)
 
 
 class FastGRPC:
@@ -33,9 +64,12 @@ class FastGRPC:
             loop: asyncio.AbstractEventLoop = asyncio.get_event_loop(),
             port: int = 50051,
             reflection: bool = False,
+            middlewares: tuple[FastGRPCMiddleware | Callable] = (),
     ):
         self._loop = loop
-        self._server = server()
+        self._server = server(
+            interceptors=[_FastGRPCInterceptor(middlewares=middlewares)],
+        )
         self._server.add_insecure_port(f"[::]:{port}")
 
         for service in services:

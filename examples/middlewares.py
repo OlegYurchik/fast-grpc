@@ -1,4 +1,5 @@
 import logging
+import time
 
 from pydantic import BaseModel
 
@@ -28,6 +29,16 @@ async def replacement_middleware(next_call, request, context):
     return HelloResponse(text="Good bye!")
 
 
+async def track_handle_middleware(next_call, request, context):
+    start_time = time.perf_counter()
+    try:
+        return await next_call(request, context)
+    finally:
+        end_time = time.perf_counter()
+        handle_time = end_time - start_time
+        print(f"Function call time is {handle_time:.6f}")
+
+
 class Greeter(FastGRPCService):
     middlewares = [LogMiddleware(logger=logging.getLogger(__name__))]
 
@@ -38,5 +49,9 @@ class Greeter(FastGRPCService):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    app = FastGRPC(Greeter(), reflection=True)
+    app = FastGRPC(
+        Greeter(),
+        middlewares=[track_handle_middleware],
+        reflection=True,
+    )
     app.run()

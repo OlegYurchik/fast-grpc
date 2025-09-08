@@ -1,35 +1,48 @@
-[tool.poetry]
+[project]
 name = "py-fast-grpc"
 version = "1.0.0"
 description = "gRPC simple and easy to use Python framework"
-authors = ["Oleg Yurchik"]
-license = "MIT License"
+authors = [{ name = "Oleg Yurchik" }]
+requires-python = "~=3.11.0"
 readme = "README.md"
-packages = [
-  { include = "fast_grpc" },
+license = "MIT"
+dependencies = [
+    "protobuf>=6.31.1,<7",
+    "protobuf-to-pydantic[all]>=0.3.3.1,<0.4",
+    "grpcio>=1.59.3,<2",
+    "grpcio-tools>=1.59.3,<2",
+    "grpcio-reflection>=1.59.3,<2",
+    "jinja2>=3.1.2,<4",
+    "pydantic[email]>=2.5.2,<3",
+    "grpc-interceptor>=0.15.4,<0.16",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-protobuf = "^6.31.1"
-protobuf-to-pydantic = {version = "^0.3.3.1", extras = ["all"]}
-grpcio = "^1.59.3"
-grpcio-reflection = "^1.59.3"
-grpcio-tools = "^1.59.3"
-jinja2 = "^3.1.2"
-pydantic = {version = "^2.5.2", extras = ["email"]}
+[dependency-groups]
+dev = [
+    "pytest>=7.4.3,<8",
+    "faker>=20.1.0,<21",
+    "pylint>=3.1.0,<4",
+    "pylint-quotes>=0.2.3,<0.3",
+]
+docs = [
+    "mkdocs>=1.6.1,<2",
+    "mkdocs-material>=9.6.15,<10",
+    "mkdocstrings[python]>=0.30.0,<0.31",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
-faker = "^20.1.0"
-pylint = "^3.1.0"
-pylint-quotes = "^0.2.3"
+[tool.uv]
+default-groups = [
+    "dev",
+    "docs",
+]
 
-[tool.poetry.group.docs.dependencies]
-mkdocs = "^1.6.1"
-mkdocs-material = "^9.6.15"
-mkdocstrings = {version = "^0.30.0", extras = ["python"]}
+[tool.hatch.build.targets.sdist]
+include = ["fast_grpc"]
+
+[tool.hatch.build.targets.wheel]
+include = ["fast_grpc"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+
+build-backend = "hatchling.build"

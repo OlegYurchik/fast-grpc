@@ -82,7 +82,7 @@ class GRPCMethod:
     ) -> Callable:
         signature = inspect.signature(function)
 
-        async def wrapper(request, context) -> BaseModel:
+        async def wrapper(request, context: grpc.ServicerContext) -> BaseModel:
             args = {"request": request}
             if "self" in signature.parameters:
                 args["self"] = service
