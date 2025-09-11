@@ -265,6 +265,7 @@ class FastGRPCServiceMeta(type):
         methods = {}
         messages = {}
         models = set()
+        enums = {}
         for grpc_method_name, grpc_method in grpc_methods.items():
             models |= proto.gather_models(grpc_method.request_model)
             models |= proto.gather_models(grpc_method.response_model)
@@ -279,12 +280,14 @@ class FastGRPCServiceMeta(type):
             for model in models:
                 message = proto.get_message_from_model(model)
                 messages[message.name] = message
+                enums |= proto.gather_enums_from_model(model)
 
         return proto.Service(
             package_name=package_name,
             name=name,
             methods=methods,
             messages=messages,
+            enums=enums,
         )
 
     @staticmethod
@@ -302,7 +305,7 @@ class FastGRPCServiceMeta(type):
             proto.compile_proto(proto_file=proto_file, proto_path=proto_path,
                                 grpc_path=grpc_path)
         finally:
-            if not save_proto:
+            if proto_file.is_file() and not save_proto:
                 proto_file.unlink()
 
         grpc_path = str(grpc_path)

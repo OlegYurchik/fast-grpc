@@ -1,26 +1,35 @@
-from pydantic import BaseModel, model_validator
+import enum
+from typing import Literal
 
-from .enums import TypeEnum
+from pydantic import BaseModel, model_validator
 
 
 class Field(BaseModel):
     name: str
     type: str
     repeated: bool = False
-    map_key: str | None = None
-    map_value: str | None = None
+    optional: bool = False
 
-    @model_validator(mode="after")
-    def root_validator(self):
-        if self.type is TypeEnum.MAP:
-            if self.repeated:
-                raise ValueError("Field 'repeated' cannot be True, when protobuf type is 'map'")
-            if self.map_key is None:
-                raise ValueError("Field 'map_key' must be set, when protobuf type is 'map'")
-            if self.map_value is None:
-                raise ValueError("Field 'map_value' must be set, when protobuf type is 'map'")
+    def render(self) -> str:
+        result = ""
+        if self.repeated:
+            result += "repeated "
+        if self.optional:
+            result += "optional "
+        result += f"{self.render_type()} {self.name}"
+        return result
 
-        return self
+    def render_type(self) -> str:
+        return self.type
+
+
+class MapField(Field):
+    type: Literal["map"] = "map"
+    key: str
+    value: str
+
+    def render_type(self) -> str:
+        return f"map<{self.key}, {self.value}>"
 
 
 class Message(BaseModel):
@@ -39,3 +48,4 @@ class Service(BaseModel):
     name: str
     methods: dict[str, Method]
     messages: dict[str, Message]
+    enums: dict[str, type[enum.Enum]]

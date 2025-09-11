@@ -7,13 +7,20 @@ service {{ service.name }} {
 {% endfor %}
 }
 
+{% for name, enum in service.enums.items() -%}
+enum {{ name }} {
+    {% for value in enum -%}
+    {{ value.name }} = {{ loop.index0 }};
+    {% endfor -%}
+}
+{% endfor %}
+
 {% for message in service.messages.values() %}
 message {{ message.name }} {
 {% for field in message.fields.values() %}
     {% if field.repeated %}repeated {% endif -%}
-    {% if field.type == "map" %}map<{{ field.map_key }}, {{ field.map_value }}> {% else %}{{ field.type }} {% endif -%}
-    {{ field.name }} = {{ loop.index0 + 1 }};
+    {{ field.render() }} = {{ loop.index0 + 1 }};
 {% endfor %}
 }
 
-{% endfor %}
+{% endfor -%}

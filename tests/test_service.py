@@ -30,6 +30,7 @@ service PyTestService {
     rpc test(PyTestRequest) returns (PyTestResponse) {}
 }
 
+
 message PyTestResponse {
     string message = 1;
 }
@@ -46,6 +47,7 @@ service PyTestService {
     rpc test_2(PyTestRequest) returns (PyTestResponse) {}
     rpc test(PyTestRequest) returns (PyTestResponse) {}
 }
+
 
 message PyTestRequest {
     string message = 1;

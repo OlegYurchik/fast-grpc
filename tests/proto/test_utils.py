@@ -8,7 +8,7 @@ from fast_grpc.proto import Service, compile_proto, render_proto
 def test_render_proto(faker: Faker):
     name = faker.first_name()
     package_name = faker.last_name().lower()
-    service = Service(package_name=package_name, name=name, methods={}, messages={})
+    service = Service(package_name=package_name, name=name, methods={}, messages={}, enums={})
 
     proto_content = render_proto(service=service).strip()
     expected_proto_content = (

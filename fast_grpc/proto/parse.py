@@ -1,122 +1,103 @@
+import enum
 import inspect
 from types import NoneType, UnionType
-from typing import Annotated, Iterable, Type, Union, get_origin
+from typing import Annotated, Iterable, Union, get_origin
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
-from .enums import TYPE_MAPPING
-from .models import Field, Message
+from .models import Field, MapField, Message
+from .type_mappings import ORIGIN_TYPES_MAPPING, TYPE_MAPPING
 
 
-def parse_type_sequence(name: str, python_type, args: list) -> Field:
-    if len(args) != 1:
-        raise TypeError(
-            f"Field '{name}': type '{python_type}' must have only one subtype, not {len(args)}.",
-        )
+def get_message_from_model(model: type[BaseModel]) -> Message:
+    fields = {}
 
-    inside_python_type = args[0]
-    grpc_type = parse_type(name, inside_python_type, python_type)
+    for name, field in model.model_fields.items():
+        fields[name] = parse_type(name=name, python_type=field.annotation)
 
-    return Field(name=name, type=grpc_type, repeated=True)
+    return Message(name=model.__name__, fields=fields)
 
 
-def parse_type_mapping(name: str, python_type, args: list) -> Field:
-    if len(args) != 2:
-        raise TypeError(
-            f"Field '{name}': type '{python_type}' must have two subtypes, not {len(args)}.",
-        )
+def parse_type(name: str, python_type: type, allow_pydantic_model: bool = True) -> Field:
+    if python_type in TYPE_MAPPING:
+        return Field(name=name, type=TYPE_MAPPING[python_type])
 
-    grpc_type = TYPE_MAPPING[dict].value
-    python_map_key, python_map_value = args
-    map_key = parse_type(name, python_map_key, python_type, allow_pydantic_model=False)
-    map_value = parse_type(name, python_map_value, python_type)
+    if (origin := get_origin(python_type)):
+        if origin in (Annotated, Union, UnionType):
+            return parse_type_union(name=name, python_type=python_type)
+        if issubclass(origin, dict):
+            return parse_type_mapping(name=name, python_type=python_type)
+        if issubclass(origin, Iterable):
+            return parse_type_sequence(name=name, python_type=python_type)
 
-    return Field(
-        name=name,
-        type=grpc_type,
-        map_key=map_key,
-        map_value=map_value,
-    )
+    if inspect.isclass(python_type):
+        if issubclass(python_type, enum.Enum):
+            return Field(name=name, type=python_type.__name__)
+        if (
+                allow_pydantic_model and
+                issubclass(python_type, BaseModel)
+        ):
+            return Field(name=name, type=python_type.__name__)
+        for type_ in ORIGIN_TYPES_MAPPING:
+            if issubclass(python_type, type_):
+                return Field(name=name, type=ORIGIN_TYPES_MAPPING[type_])
+   
+    raise TypeError(f"Field '{name}': unsupported type '{python_type}'.")
 
 
-def parse_type_union(name: str, python_type, args: list) -> Field:
+def parse_type_union(name: str, python_type: type) -> Field:
+    if not hasattr(python_type, "__args__"):
+        raise TypeError(f"Field '{name}': type '{python_type}' is not union.")
+
+    optional = False
+    args = list(python_type.__args__)
     if NoneType in args:
         args.remove(NoneType)
+        optional = True
     if len(args) != 1:
         raise TypeError(
             f"Field '{name}': type '{python_type}' must have only one subtype, not {len(args)}. "
             "Tip: None/Optional type ignoring."
         )
 
-    inside_python_type = args[0]
-    grpc_type = parse_type(name, inside_python_type, python_type)
+    field = parse_type(name=name, python_type=args[0])
+    field.optional = optional
+    return field
 
-    return Field(name=name, type=grpc_type)
 
-
-def parse_type(name: str, python_value, python_type, allow_pydantic_model: bool = True):
-    if python_value in TYPE_MAPPING:
-        value = TYPE_MAPPING[python_value].value
-    elif (
-            (origin := get_origin(python_value)) is not None and
-            origin in (Annotated, Union, UnionType)
-    ):
-        python_value_args = list(python_value.__args__)
-        value = parse_type_union(name=name, python_type=python_value, args=python_value_args).type
-    elif (
-            allow_pydantic_model and
-            inspect.isclass(python_value) and
-            issubclass(python_value, BaseModel)
-    ):
-        value = python_value.__name__
-    else:
+def parse_type_mapping(name: str, python_type: type) -> Field:
+    args = tuple(python_type.__args__)
+    if len(args) != 2:
         raise TypeError(
-            f"Field '{name}': unsupported type '{python_value}' in type '{python_type}'.",
+            f"Field '{name}': type '{python_type}' must have two subtypes, not {len(args)}.",
         )
 
-    return value
+    python_key_type, python_value_type = args
+    key_field = parse_type(name=name, python_type=python_key_type, allow_pydantic_model=False)
+    value_field = parse_type(name=name, python_type=python_value_type)
 
-
-def parse_field(name: str, field: FieldInfo) -> Field:
-    repeated = False
-    map_key, map_value = None, None
-    python_type = field.annotation
-    if python_type in TYPE_MAPPING:
-        grpc_type = TYPE_MAPPING[python_type].value
-    elif (origin := get_origin(python_type)) is not None:
-        args = list(python_type.__args__)
-        if origin in (Annotated, Union, UnionType):
-            return parse_type_union(name, python_type, args)
-        if issubclass(origin, dict):
-            return parse_type_mapping(name, python_type, args)
-        if issubclass(origin, Iterable):
-            return parse_type_sequence(name, python_type, args)
-        raise TypeError(f"Field '{name}': unsupported type '{python_type}'.")
-    elif inspect.isclass(python_type) and issubclass(python_type, BaseModel):
-        grpc_type = python_type.__name__
-    else:
-        raise TypeError(f"Field '{name}': unsupported type '{python_type}'.")
-
-    return Field(
+    return MapField(
         name=name,
-        repeated=repeated,
-        type=grpc_type,
-        map_key=map_key,
-        map_value=map_value,
+        key=key_field.type,
+        value=value_field.type,
     )
 
 
-def get_message_from_model(model: Type[BaseModel]) -> Message:
-    fields = {}
+def parse_type_sequence(name: str, python_type: type) -> Field:
+    args = tuple(python_type.__args__)
+    if len(args) != 1:
+        raise TypeError(
+            f"Field '{name}': type '{python_type}' must have only one subtype, not {len(args)}.",
+        )
 
-    for name, field in model.model_fields.items():
-        fields[name] = parse_field(name=name, field=field)
+    field = parse_type(name=name, python_type=args[0])
+    field.repeated = True
 
-    return Message(name=model.__name__, fields=fields)
+    return field
 
 
-def gather_models(model: Type[BaseModel]) -> set[Type[BaseModel]]:
+def gather_models(model: type[BaseModel]) -> set[type[BaseModel]]:
     models = set()
     stack = [model]
     processed = set()
@@ -141,3 +122,29 @@ def gather_models(model: Type[BaseModel]) -> set[Type[BaseModel]]:
                     stack.append(arg)
 
     return models
+
+
+def gather_enums_from_model(model: type[BaseModel]) -> dict[str, type[enum.Enum]]:
+    enums = {}
+    processed = set()
+
+    for field in model.model_fields.values():
+        arg_stack = [field.annotation]
+        while arg_stack:
+            arg = arg_stack.pop()
+            if get_origin(arg) is not None:
+                arg_stack.extend(arg.__args__)
+            elif (
+                    inspect.isclass(arg) and
+                    issubclass(arg, BaseModel) and
+                    arg not in processed
+            ):
+                    arg_stack.append(arg)
+            elif (
+                    inspect.isclass(arg) and
+                    issubclass(arg, enum.Enum) and
+                    arg not in processed
+            ):
+                enums[arg.__name__] = arg
+
+    return enums
