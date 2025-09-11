@@ -41,4 +41,5 @@ app.run()
 ## TODO
 
 * Add TLS support
-* Add `enum`, `oneof`, `deprecated`, `reserved`
+* Add `oneof`, `deprecated`, `reserved`
+* Move to `ruff`

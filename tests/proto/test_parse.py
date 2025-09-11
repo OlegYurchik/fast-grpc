@@ -1,8 +1,7 @@
-import enum
 import pathlib
 import uuid
 from functools import reduce
-from typing import Dict, FrozenSet, Iterable, List, Optional, Sequence, Set, Tuple, Type, Union
+from typing import Dict, FrozenSet, Iterable, List, Sequence, Set, Tuple, Type, Union
 
 import pytest
 from faker import Faker
@@ -17,7 +16,6 @@ from pydantic import (
     conint,
     constr,
 )
-from pydantic.fields import FieldInfo
 
 from fast_grpc.proto.models import Field, MapField, Message
 from fast_grpc.proto.parse import (

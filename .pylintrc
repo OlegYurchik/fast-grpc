@@ -1,7 +1,7 @@
 [MASTER]
 
 fail-under=10.0
-ignore-paths=.*\.venv/.*
+ignore-paths=.venv
 ignore-patterns=.lock,
                 .toml,
                 .ini,
@@ -23,6 +23,7 @@ disable=missing-class-docstring,
         missing-function-docstring,
         too-many-arguments,
         too-many-positional-arguments,
+        too-many-return-statements,
         duplicate-code,
         redefined-outer-name,
         too-few-public-methods,

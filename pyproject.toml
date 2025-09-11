@@ -1,6 +1,6 @@
 [project]
 name = "py-fast-grpc"
-version = "1.0.0"
+version = "1.0.1"
 description = "gRPC simple and easy to use Python framework"
 authors = [{ name = "Oleg Yurchik" }]
 requires-python = "~=3.11.0"

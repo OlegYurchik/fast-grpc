@@ -4,7 +4,6 @@ from types import NoneType, UnionType
 from typing import Annotated, Iterable, Union, get_origin
 
 from pydantic import BaseModel
-from pydantic.fields import FieldInfo
 
 from .models import Field, MapField, Message
 from .type_mappings import ORIGIN_TYPES_MAPPING, TYPE_MAPPING
@@ -42,7 +41,7 @@ def parse_type(name: str, python_type: type, allow_pydantic_model: bool = True) 
         for type_ in ORIGIN_TYPES_MAPPING:
             if issubclass(python_type, type_):
                 return Field(name=name, type=ORIGIN_TYPES_MAPPING[type_])
-   
+
     raise TypeError(f"Field '{name}': unsupported type '{python_type}'.")
 
 
@@ -139,7 +138,7 @@ def gather_enums_from_model(model: type[BaseModel]) -> dict[str, type[enum.Enum]
                     issubclass(arg, BaseModel) and
                     arg not in processed
             ):
-                    arg_stack.append(arg)
+                arg_stack.append(arg)
             elif (
                     inspect.isclass(arg) and
                     issubclass(arg, enum.Enum) and

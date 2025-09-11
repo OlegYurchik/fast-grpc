@@ -4,7 +4,6 @@ from typing import Callable
 
 import grpc
 from grpc.aio import server
-from grpc_interceptor.exceptions import GrpcException
 from grpc_interceptor.server import AsyncServerInterceptor
 from grpc_reflection.v1alpha import reflection as grpc_reflection
 
@@ -22,19 +21,19 @@ class _FastGRPCInterceptor(AsyncServerInterceptor):
     async def intercept(
             self,
             method: Callable,
-            request_or_generator,
+            request_or_iterator,
             context: grpc.ServicerContext,
             method_name: str,
     ):
         async def wrapper(request, context):
-            coroutine_or_generator = method(request_or_generator, context)
-            if hasattr(coroutine_or_generator, "__aiter__"):
-                return coroutine_or_generator
-            return await coroutine_or_generator
+            coroutine_or_iterator = method(request_or_iterator, context)
+            if hasattr(coroutine_or_iterator, "__aiter__"):
+                return coroutine_or_iterator
+            return await coroutine_or_iterator
 
         for middleware in self._middlewares[::-1]:
             wrapper = functools.partial(middleware, wrapper)
-        return await wrapper(request_or_generator, context)
+        return await wrapper(request_or_iterator, context)
 
 
 class FastGRPC:

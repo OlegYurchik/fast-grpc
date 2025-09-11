@@ -1,4 +1,3 @@
-import enum
 import pathlib
 import uuid
 from typing import Annotated, get_origin

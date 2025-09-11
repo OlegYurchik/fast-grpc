@@ -1,7 +1,7 @@
 import enum
 from typing import Literal
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
 
 class Field(BaseModel):
