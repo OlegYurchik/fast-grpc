@@ -10,11 +10,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: snok/install-poetry@v1
+      - uses: astral-sh/setup-uv@v6
       - name: Install requirements
-        run: poetry install
+        run: uv sync
       - name: Check lint
-        run: poetry run pylint fast_grpc tests
+        run: uv run pylint fast_grpc tests
   test:
     runs-on: ubuntu-latest
     steps:
@@ -24,8 +24,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: snok/install-poetry@v1
+      - uses: astral-sh/setup-uv@v6
       - name: Install requirements
-        run: poetry install
+        run: uv sync
       - name: Check lint
-        run: poetry run pytest tests
+        run: uv run pytest tests
