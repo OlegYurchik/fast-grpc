@@ -61,13 +61,18 @@ ROOT_FIELDS = {
     "sixteen": Field(name="sixteen", type=RootModelEnum.__name__),
 }
 
+class FirstModelEnum(enum.Enum):
+    pass
+
 
 class FirstModel(BaseModel):
     root: list[RootModel]
+    enum: FirstModelEnum
 
 
 FIRST_FIELDS = {
     "root": Field(name="root", type="RootModel", repeated=True),
+    "enum": Field(name="enum", type="FirstModelEnum"),
 }
 
 

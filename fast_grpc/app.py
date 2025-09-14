@@ -44,6 +44,7 @@ class FastGRPC:
         loop (asyncio.AbstractEventLoop): Async event loop for running server.
         port (int): Port for listen requests.
         reflection (bool): Flag for enable/disable server gRPC reflection.
+        middlewares (tuple[FastGRPCMiddleware | Callable]): Tuple of middlewares (interceptors).
 
     Example:
         ```python

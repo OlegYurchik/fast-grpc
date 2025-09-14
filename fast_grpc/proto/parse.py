@@ -66,6 +66,9 @@ def parse_type_union(name: str, python_type: type) -> Field:
 
 
 def parse_type_mapping(name: str, python_type: type) -> Field:
+    if not hasattr(python_type, "__args__"):
+        raise TypeError(f"Field '{name}': type '{python_type}' is not mapping.")
+
     args = tuple(python_type.__args__)
     if len(args) != 2:
         raise TypeError(
@@ -91,19 +94,20 @@ def parse_type_sequence(name: str, python_type: type) -> Field:
         )
 
     field = parse_type(name=name, python_type=args[0])
+    field.optional = False
     field.repeated = True
 
     return field
 
 
-def gather_models(model: type[BaseModel]) -> set[type[BaseModel]]:
-    models = set()
+def gather_models(model: type[BaseModel]) -> dict[str, type[BaseModel]]:
+    models = {}
     stack = [model]
     processed = set()
 
     while stack:
         model = stack.pop()
-        models.add(model)
+        models[model.__name__] = model
         processed.add(model)
 
         for field in model.model_fields.values():
@@ -126,24 +130,24 @@ def gather_models(model: type[BaseModel]) -> set[type[BaseModel]]:
 def gather_enums_from_model(model: type[BaseModel]) -> dict[str, type[enum.Enum]]:
     enums = {}
     processed = set()
+    arg_stack = [field.annotation for field in model.model_fields.values()]
 
-    for field in model.model_fields.values():
-        arg_stack = [field.annotation]
-        while arg_stack:
-            arg = arg_stack.pop()
-            if get_origin(arg) is not None:
-                arg_stack.extend(arg.__args__)
-            elif (
-                    inspect.isclass(arg) and
-                    issubclass(arg, BaseModel) and
-                    arg not in processed
-            ):
-                arg_stack.append(arg)
-            elif (
-                    inspect.isclass(arg) and
-                    issubclass(arg, enum.Enum) and
-                    arg not in processed
-            ):
-                enums[arg.__name__] = arg
+    while arg_stack:
+        arg = arg_stack.pop()
+        if get_origin(arg) is not None:
+            arg_stack.extend(arg.__args__)
+        elif (
+                inspect.isclass(arg) and
+                issubclass(arg, BaseModel) and
+                arg not in processed
+        ):
+            arg_stack.extend(field.annotation for field in arg.model_fields.values())
+        elif (
+                inspect.isclass(arg) and
+                issubclass(arg, enum.Enum) and
+                arg not in processed
+        ):
+            enums[arg.__name__] = arg
+        processed.add(arg)
 
     return enums

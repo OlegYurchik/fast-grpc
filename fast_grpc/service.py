@@ -264,7 +264,7 @@ class FastGRPCServiceMeta(type):
 
         methods = {}
         messages = {}
-        models = set()
+        models = {}
         enums = {}
         for grpc_method_name, grpc_method in grpc_methods.items():
             models |= proto.gather_models(grpc_method.request_model)
@@ -277,7 +277,7 @@ class FastGRPCServiceMeta(type):
                 request=request_message,
                 response=response_message,
             )
-            for model in models:
+            for model in models.values():
                 message = proto.get_message_from_model(model)
                 messages[message.name] = message
                 enums |= proto.gather_enums_from_model(model)
