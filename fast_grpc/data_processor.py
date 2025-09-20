@@ -1,6 +1,6 @@
 import enum
 import inspect
-from typing import Any, Iterable, get_origin
+from typing import Annotated, Any, Iterable, Union, UnionType, get_origin
 
 from pydantic import BaseModel
 
