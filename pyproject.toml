@@ -31,10 +31,7 @@ docs = [
 ]
 
 [tool.uv]
-default-groups = [
-    "dev",
-    "docs",
-]
+default-groups = []
 
 [tool.hatch.build.targets.sdist]
 include = ["fast_grpc"]
