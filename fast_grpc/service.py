@@ -12,6 +12,12 @@ from protobuf_to_pydantic import msg_to_pydantic_model
 from pydantic import BaseModel
 
 from . import proto
+from .data_processor import (
+    DataProcessor,
+    EnumByNameTypeProcessor,
+    EnumByValueTypeProcessor,
+    EnumNameByValueTypeProcessor,
+)
 from .middleware import FastGRPCMiddleware
 
 
@@ -75,27 +81,6 @@ class GRPCMethod:
         return self._is_enabled
 
     @staticmethod
-    def _apply_middlewares_to_function(
-            function: Callable,
-            service: "FastGRPCService",
-            middlewares: tuple[FastGRPCMiddleware | Callable] = (),
-    ) -> Callable:
-        signature = inspect.signature(function)
-
-        async def wrapper(request, context: grpc.ServicerContext) -> BaseModel:
-            args = {"request": request}
-            if "self" in signature.parameters:
-                args["self"] = service
-            if "context" in signature.parameters:
-                args["context"] = context
-            return await function(**args)
-
-        for middleware in middlewares[::-1]:
-            wrapper = functools.partial(middleware, wrapper)
-
-        return wrapper
-
-    @staticmethod
     def _get_request_model_from_function(function: Callable) -> type[BaseModel]:
         signature = inspect.signature(function)
         if "request" not in signature.parameters:
@@ -125,20 +110,54 @@ class GRPCMethod:
         return functools.partial(self.__call__, instance)
 
     async def __call__(self, service: "FastGRPCService", request, context):
+        request_data = MessageToDict(
+            request,
+            always_print_fields_with_no_presence=True,
+            preserving_proto_field_name=True,
+        )
+        request_data = DataProcessor(
+            EnumByNameTypeProcessor(),
+        )(data=request_data, model=self._request_model)
+        inner_request = self._request_model.model_validate(request_data)
         function = self._apply_middlewares_to_function(
             function=self._function,
             service=service,
             middlewares=service.middlewares + self._middlewares,
         )
-        inner_request = self._request_model.model_validate(request, from_attributes=True)
+
         response = await function(request=inner_request, context=context)
 
+        response_data = response.model_dump(mode="json")
+        response_data = DataProcessor(
+            EnumNameByValueTypeProcessor(),
+        )(data=response_data, model=self._response_model)
         grpc_model = getattr(service.pb2, self._response_model.__name__)
         return ParseDict(
-            response.model_dump(mode="json"),
+            response_data,
             grpc_model(),
             ignore_unknown_fields=True,
         )
+
+    @staticmethod
+    def _apply_middlewares_to_function(
+            function: Callable,
+            service: "FastGRPCService",
+            middlewares: tuple[FastGRPCMiddleware | Callable] = (),
+    ) -> Callable:
+        signature = inspect.signature(function)
+
+        async def wrapper(request, context: grpc.ServicerContext) -> BaseModel:
+            args = {"request": request}
+            if "self" in signature.parameters:
+                args["self"] = service
+            if "context" in signature.parameters:
+                args["context"] = context
+            return await function(**args)
+
+        for middleware in middlewares[::-1]:
+            wrapper = functools.partial(middleware, wrapper)
+
+        return wrapper
 
 
 def grpc_method(
@@ -328,16 +347,24 @@ class FastGRPCServiceMeta(type):
             ) -> BaseModel:
                 call_rpc = getattr(self.stub, _grpc_method.name)
                 grpc_request_message_class = getattr(pb2, _grpc_method.request_model.__name__)
+                grpc_request_message_data = request.model_dump(mode="json")
+                grpc_request_message_data = DataProcessor(
+                    EnumNameByValueTypeProcessor(),
+                )(data=grpc_request_message_data, model=_grpc_method.request_model)
                 grpc_request_message = ParseDict(
-                    request.model_dump(mode="json"),
+                    grpc_request_message_data,
                     grpc_request_message_class(),
                 )
                 grpc_response_message = await call_rpc(request=grpc_request_message)
-                grpc_response_dict = MessageToDict(
+                grpc_response_message_data = MessageToDict(
                     grpc_response_message,
+                    always_print_fields_with_no_presence=True,
                     preserving_proto_field_name=True,
                 )
-                return _grpc_method.response_model.model_validate(grpc_response_dict)
+                grpc_response_message_data = DataProcessor(
+                    EnumByNameTypeProcessor(),
+                )(data=grpc_response_message_data, model=_grpc_method.response_model)
+                return _grpc_method.response_model.model_validate(grpc_response_message_data)
 
             attributes[grpc_method_name] = wrapper
             for alias in grpc_method.aliases:

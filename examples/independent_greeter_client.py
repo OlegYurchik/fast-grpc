@@ -24,7 +24,7 @@ class GreeterInterface(FastGRPCService):
 class Greeter(GreeterInterface):
     @grpc_method
     async def say_hello(self, request: HelloRequest) -> HelloResponse:
-        return HelloResponse(text=f"Hello, {request.name}")
+        return HelloResponse(text=f"Hello, {request.name}", enum=HelloEnum.C)
 
 
 async def main():
