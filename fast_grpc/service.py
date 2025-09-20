@@ -15,7 +15,6 @@ from . import proto
 from .data_processor import (
     DataProcessor,
     EnumByNameTypeProcessor,
-    EnumByValueTypeProcessor,
     EnumNameByValueTypeProcessor,
 )
 from .middleware import FastGRPCMiddleware

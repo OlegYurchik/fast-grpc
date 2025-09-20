@@ -1,6 +1,7 @@
 import enum
 import inspect
-from typing import Annotated, Any, Iterable, Union, UnionType, get_origin
+from types import UnionType
+from typing import Annotated, Any, Iterable, Union, get_origin
 
 from pydantic import BaseModel
 
@@ -77,13 +78,6 @@ class EnumNameByValueTypeProcessor(TypeProcessor):
 
     def process(self, data: Any, annotation: type[enum.Enum]) -> enum.Enum:
         return annotation(data).name
-
-
-class EnumByValueTypeProcessor(TypeProcessor):
-    type_ = enum.Enum
-
-    def process(self, data: Any, annotation: type[enum.Enum]) -> enum.Enum:
-        return annotation(data)
 
 
 class EnumByNameTypeProcessor(TypeProcessor):

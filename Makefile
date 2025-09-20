@@ -2,14 +2,14 @@
 export
 
 publish:
-	python -m poetry config pypi-token.pypi ${PYPI_TOKEN}
-	python -m poetry publish --build
+	uv run python -m poetry config pypi-token.pypi ${PYPI_TOKEN}
+	uv run python -m poetry publish --build
 
 lint:
-	python -m pylint .
+	uv run python -m pylint .
 
 test:
-	python -m pytest tests
+	uv run python -m pytest tests
 
 docs:
-	python -m mkdocs serve
+	uv run python -m mkdocs serve
